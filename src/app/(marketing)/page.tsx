@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentSession } from "@/server/auth";
 import { db } from "@/server/db";
@@ -72,7 +71,6 @@ export default async function MarketingPage() {
 
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-16">
         <section className="flex flex-col items-center gap-6 text-center">
-          <Badge variant="outline">Multi-school platform</Badge>
           <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-6xl">
             Run your school on one platform.
           </h1>
