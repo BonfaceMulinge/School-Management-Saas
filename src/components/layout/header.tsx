@@ -41,19 +41,20 @@ export function Header({
         </div>
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          render={
-            <Button variant="ghost" size="icon" aria-label="Account menu">
-              <Avatar className="size-8">
-                <AvatarFallback>
-                  <UserRound className="size-4" aria-hidden="true" />
-                </AvatarFallback>
-              </Avatar>
-            </Button>
-          }
-        />
-        <DropdownMenuContent align="end" className="w-56">
+      <div className="flex items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button variant="ghost" size="icon" aria-label="Account menu">
+                <Avatar className="size-8">
+                  <AvatarFallback>
+                    <UserRound className="size-4" aria-hidden="true" />
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            }
+          />
+          <DropdownMenuContent align="end" className="w-56">
           <DropdownMenuLabel className="flex flex-col gap-0.5">
             <span className="truncate text-sm font-medium text-foreground">
               {user.name ?? user.email}
@@ -78,20 +79,18 @@ export function Header({
               }
             />
           ) : null}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            render={
-              <form action={logout}>
-                <button type="submit" className="flex w-full items-center gap-1.5">
-                  <LogOut className="size-4" aria-hidden="true" />
-                  Sign out
-                </button>
-              </form>
-            }
-          />
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <LogOut className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
+        </form>
+      </div>
     </header>
   );
 }
