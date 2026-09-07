@@ -10,9 +10,11 @@ import {
   Settings,
   Plug,
   Banknote,
+  LogOut,
 } from "lucide-react";
 
 import { requireSuperAdmin } from "@/server/platform-auth";
+import { logout } from "@/server/actions/auth";
 import { AdminMobileNav } from "./admin-mobile-nav";
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
@@ -84,6 +86,15 @@ function AdminHeader({ user }: { user: { id: string; name: string | null; email:
           <span className="text-sm font-medium">{user.name ?? "Super Admin"}</span>
           <span className="text-xs text-muted-foreground">{user.email}</span>
         </div>
+        <form action={logout}>
+          <button
+            type="submit"
+            className="inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <LogOut className="size-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Sign out</span>
+          </button>
+        </form>
       </div>
     </header>
   );

@@ -21,6 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import type { Permission } from "@/lib/permissions";
 
 const modules = [
   {
@@ -28,6 +29,7 @@ const modules = [
     description: "Student records, enrollment and guardians.",
     icon: GraduationCap,
     href: "students",
+    permission: "students:view" as Permission,
     phase: "Live",
   },
   {
@@ -36,6 +38,7 @@ const modules = [
     icon: Users,
     phase: "Live",
     href: "teachers",
+    permission: "staff:view" as Permission,
   },
   {
     title: "Academics",
@@ -43,6 +46,7 @@ const modules = [
     icon: BookOpen,
     phase: "Live",
     href: "subjects",
+    permission: "subjects:view" as Permission,
   },
   {
     title: "Communication",
@@ -50,6 +54,7 @@ const modules = [
     icon: Megaphone,
     phase: "Live",
     href: "communication/announcements",
+    permission: "communication:view" as Permission,
   },
   {
     title: "Reports",
@@ -57,6 +62,7 @@ const modules = [
     icon: BarChart3,
     phase: "Live",
     href: "reports",
+    permission: "results:view" as Permission,
   },
 ];
 
@@ -70,6 +76,17 @@ export default async function SchoolDashboardPage(props: PageProps<"/[school]">)
     requirePermission(slug, "dashboard:view", { next: `/${slug}` }),
     canAccess(slug, "finance:view"),
   ]);
+
+  const visibleModules = (
+    await Promise.all(
+      modules.map(async (module) => ({
+        module,
+        visible: await canAccess(slug, module.permission),
+      }))
+    )
+  )
+    .filter(({ visible }) => visible)
+    .map(({ module }) => module);
 
   const selfScoped =
     !access.isPlatformStaff &&
@@ -232,7 +249,7 @@ export default async function SchoolDashboardPage(props: PageProps<"/[school]">)
               </Link>
             </CardHeader>
           </Card>
-          {modules.map((module) => (
+          {visibleModules.map((module) => (
             <Card key={module.title}>
               <CardHeader>
                 <module.icon className="size-5 text-primary" aria-hidden="true" />

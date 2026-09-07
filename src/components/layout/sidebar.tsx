@@ -7,8 +7,10 @@ import { APP_NAME } from "@/lib/constants";
 import {
   administrationNav,
   dashboardNav,
+  visibleDashboardNav,
   type NavItem,
 } from "@/components/layout/navigation";
+import type { PlatformRole, SchoolRole } from "@/lib/permissions";
 
 function NavLink({
   item,
@@ -34,8 +36,7 @@ function NavLink({
     );
   }
 
-  const href =
-    item.href === "" ? `/${school}` : `/${school}/${item.href}`;
+  const href = item.href === "" ? `/${school}` : `/${school}/${item.href}`;
 
   return (
     <Link
@@ -56,26 +57,32 @@ function NavLink({
 export function Sidebar({
   school,
   notificationsUnread,
+  role,
+  platformRole,
 }: {
   school: string;
   notificationsUnread?: number;
+  role: SchoolRole | null;
+  platformRole: PlatformRole | null;
 }) {
+  const navigation = visibleDashboardNav(role, platformRole);
+  const mainNavigation = navigation.filter((item) => dashboardNav.includes(item));
+  const adminNavigation = navigation.filter((item) => administrationNav.includes(item));
+
   return (
     <div className="flex h-full flex-col gap-4 border-r border-border bg-card px-4 py-6">
       <Link href={`/${school}`} className="flex items-center gap-2 px-2">
         <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <GraduationCap className="size-4" aria-hidden="true" />
         </span>
-        <span className="text-base font-semibold tracking-tight">
-          {APP_NAME}
-        </span>
+        <span className="text-base font-semibold tracking-tight">{APP_NAME}</span>
       </Link>
 
       <Separator />
 
       <div className="flex max-h-[calc(100vh-260px)] flex-col gap-6 overflow-y-auto">
         <nav aria-label="Main navigation" className="flex flex-col gap-1">
-          {dashboardNav.map((item) => (
+          {mainNavigation.map((item) => (
             <NavLink
               key={item.title}
               item={item}
@@ -89,14 +96,13 @@ export function Sidebar({
           ))}
         </nav>
 
-        <nav
-          aria-label="Administration navigation"
-          className="flex flex-col gap-1"
-        >
-          {administrationNav.map((item) => (
-            <NavLink key={item.title} item={item} school={school} />
-          ))}
-        </nav>
+        {adminNavigation.length > 0 ? (
+          <nav aria-label="Administration navigation" className="flex flex-col gap-1">
+            {adminNavigation.map((item) => (
+              <NavLink key={item.title} item={item} school={school} />
+            ))}
+          </nav>
+        ) : null}
       </div>
 
       <div className="mt-auto px-2 text-xs text-muted-foreground">

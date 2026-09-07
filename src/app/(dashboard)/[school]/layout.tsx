@@ -62,6 +62,8 @@ export default async function SchoolLayout(props: LayoutProps<"/[school]">) {
       user={access.user}
       roleLabel={roleLabel ? formatRole(roleLabel) : undefined}
       notificationsUnread={notificationsUnread}
+      schoolRole={access.membership?.role ?? null}
+      platformRole={access.user.platformRole}
     >
       {subCheck ? (
         <>

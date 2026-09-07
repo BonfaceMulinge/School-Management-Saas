@@ -17,18 +17,22 @@ type Doc = {
 export function DocumentActions({
   doc,
   slug,
+  studentId,
 }: {
   doc: Doc;
   slug: string;
+  studentId: string;
 }) {
   const [pending, setPending] = useState(false);
 
   const handleDelete = async () => {
     setPending(true);
     try {
-      const res = await fetch(`/${slug}/students/${doc.id}/documents/delete`, {
+      const formData = new FormData();
+      formData.set("documentId", doc.id);
+      const res = await fetch(`/${slug}/students/${studentId}/documents/delete`, {
         method: "POST",
-        body: new FormData(),
+        body: formData,
       });
       const result = await res.json();
       if (result.ok) {
@@ -46,9 +50,19 @@ export function DocumentActions({
   return (
     <>
       {doc.storageKey ? (
-        <Button variant="ghost" size="sm" disabled>
+        <Button
+          render={
+            <a
+              href={`/${slug}/students/${studentId}/documents/${doc.id}`}
+              target="_blank"
+              rel="noreferrer"
+            />
+          }
+          variant="ghost"
+          size="sm"
+        >
           <ExternalLink className="mr-1 size-3.5" aria-hidden="true" />
-          No download
+          Download
         </Button>
       ) : (
         <span className="text-xs text-muted-foreground">No file</span>

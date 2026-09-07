@@ -24,6 +24,13 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
+import {
+  hasPlatformRolePermission,
+  hasSchoolRolePermission,
+  type Permission,
+  type PlatformRole,
+  type SchoolRole,
+} from "@/lib/permissions";
 
 export type NavItem = {
   title: string;
@@ -32,6 +39,46 @@ export type NavItem = {
   disabled: boolean;
 };
 
+const navPermissions: Record<string, Permission> = {
+  "academic-years": "academic-years:view",
+  terms: "terms:view",
+  classes: "classes:view",
+  streams: "streams:view",
+  subjects: "subjects:view",
+  assignments: "assignments:view",
+  students: "students:view",
+  parents: "parents:view",
+  staff: "staff:view",
+  teachers: "staff:view",
+  exams: "exams:view",
+  grading: "grading:view",
+  results: "results:view",
+  "results/reports": "results:view",
+  "finance/structures": "finance:manage",
+  "finance/charges": "finance:manage",
+  "finance/payments": "finance:manage",
+  payments: "finance:view",
+  "finance/statements": "finance:view",
+  "finance/reports": "finance:report",
+  "communication/announcements": "communication:view",
+  "communication/messages": "communication:view",
+  "communication/notifications": "communication:view",
+  "communication/events": "communication:view",
+  settings: "settings:view",
+};
+
+export function visibleDashboardNav(
+  role: SchoolRole | null,
+  platformRole: PlatformRole | null
+): NavItem[] {
+  return [...dashboardNav, ...administrationNav].filter((item) => {
+    if (item.disabled) return role === "SCHOOL_ADMIN" || platformRole === "SUPER_ADMIN";
+    const permission = navPermissions[item.href];
+    if (!permission) return true;
+    if (platformRole) return hasPlatformRolePermission(platformRole, permission);
+    return role ? hasSchoolRolePermission(role, permission) : false;
+  });
+}
 export const dashboardNav: NavItem[] = [
   {
     title: "Dashboard",

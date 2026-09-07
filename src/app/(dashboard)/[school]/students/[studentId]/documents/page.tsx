@@ -101,7 +101,7 @@ export default async function StudentDocumentsPage(
                   </td>
                   {canManage ? (
                     <td className="px-4 py-3 text-right">
-                      <DocumentActions doc={{ id: doc.id, title: doc.title, storageKey: doc.storageKey, type: doc.type, sizeBytes: doc.sizeBytes }} slug={slug} />
+                      <DocumentActions doc={{ id: doc.id, title: doc.title, storageKey: doc.storageKey, type: doc.type, sizeBytes: doc.sizeBytes }} slug={slug} studentId={studentId} />
                     </td>
                   ) : null}
                 </tr>
