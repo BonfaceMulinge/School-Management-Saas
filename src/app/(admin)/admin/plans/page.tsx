@@ -24,7 +24,7 @@ export default async function AdminPlansPage() {
       <PageHeader
         title="Subscription Plans"
         description="Create and manage SaaS subscription plans."
-        action={<CreatePlanDialog onSuccess={() => window.location.reload()} />}
+        action={<CreatePlanDialog />}
       />
 
       {plans.length === 0 ? (
@@ -32,7 +32,7 @@ export default async function AdminPlansPage() {
           icon={Package}
           title="No plans yet"
           description="Create your first subscription plan to get started."
-          action={<CreatePlanDialog onSuccess={() => window.location.reload()} />}
+          action={<CreatePlanDialog />}
         />
       ) : (
         <div className="rounded-lg border border-border">
@@ -87,7 +87,7 @@ export default async function AdminPlansPage() {
                         {!plan.isActive && (
                           <form action={async () => {
                             const res = await updatePlanAction(plan.id, { isActive: true });
-                            if (res.ok) window.location.reload();
+                            if (!res.ok) return;
                           }}>
                             <button type="submit" className="text-sm text-primary hover:underline">
                               Activate
@@ -97,7 +97,7 @@ export default async function AdminPlansPage() {
                         {plan.isActive && plan._count.subscriptions === 0 && (
                           <form action={async () => {
                             const res = await deletePlanAction(plan.id);
-                            if (res.ok) window.location.reload();
+                            if (!res.ok) return;
                           }}>
                             <button type="submit" className="text-sm text-destructive hover:underline">
                               Delete

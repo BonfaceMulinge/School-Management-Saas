@@ -33,7 +33,7 @@ export default async function AdminSubscriptionsPage() {
       <PageHeader
         title="Subscriptions"
         description="View and manage school subscriptions."
-        action={<CreateSubscriptionDialog onSuccess={() => window.location.reload()} />}
+        action={<CreateSubscriptionDialog />}
       />
 
       {subscriptions.length === 0 ? (
@@ -41,7 +41,7 @@ export default async function AdminSubscriptionsPage() {
           icon={CreditCard}
           title="No subscriptions yet"
           description="Create a subscription for a school to get started."
-          action={<CreateSubscriptionDialog onSuccess={() => window.location.reload()} />}
+          action={<CreateSubscriptionDialog />}
         />
       ) : (
         <div className="rounded-lg border border-border">
@@ -76,7 +76,7 @@ export default async function AdminSubscriptionsPage() {
                   <td className="px-4 py-3 text-xs">{sub.endDate ? formatDate(sub.endDate) : "—"}</td>
                   <td className="px-4 py-3 text-xs">{sub.gracePeriodEnd ? formatDate(sub.gracePeriodEnd) : "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <SubscriptionActions subscription={sub} onSuccess={() => window.location.reload()} />
+                    <SubscriptionActions subscription={sub} />
                   </td>
                 </tr>
               ))}
@@ -90,13 +90,11 @@ export default async function AdminSubscriptionsPage() {
 
 function SubscriptionActions({
   subscription,
-  onSuccess,
 }: {
   subscription: {
     id: string;
     status: string;
   };
-  onSuccess: () => void;
 }) {
   const isActive = ["ACTIVE", "TRIAL", "GRACE_PERIOD"].includes(subscription.status);
   const canCancel = !["CANCELLED", "EXPIRED"].includes(subscription.status);
@@ -106,7 +104,7 @@ function SubscriptionActions({
       {isActive && (
         <form action={async () => {
           const res = await setSubscriptionStatusAction(subscription.id, "SUSPENDED");
-          if (res.ok) onSuccess();
+          if (!res.ok) return;
         }}>
           <button type="submit" className="text-sm text-destructive hover:underline">
             Suspend
@@ -116,7 +114,7 @@ function SubscriptionActions({
       {!isActive && subscription.status !== "CANCELLED" && subscription.status !== "EXPIRED" && (
         <form action={async () => {
           const res = await setSubscriptionStatusAction(subscription.id, "ACTIVE");
-          if (res.ok) onSuccess();
+          if (!res.ok) return;
         }}>
           <button type="submit" className="text-sm text-primary hover:underline">
             Activate
@@ -126,7 +124,7 @@ function SubscriptionActions({
       {canCancel && (
         <form action={async () => {
           const res = await cancelSubscriptionAction(subscription.id, { immediate: false, gracePeriodDays: 30 });
-          if (res.ok) onSuccess();
+          if (!res.ok) return;
         }}>
           <button type="submit" className="text-sm text-destructive hover:underline">
             Cancel (30-day grace)

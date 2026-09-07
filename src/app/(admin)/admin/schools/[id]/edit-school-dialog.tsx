@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +24,8 @@ type School = {
   timezone: string;
 };
 
-export function EditSchoolDialog({ school, onSuccess }: { school: School; onSuccess: () => void }) {
+export function EditSchoolDialog({ school }: { school: School }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [formData, setFormData] = useState<{
@@ -75,7 +77,7 @@ export function EditSchoolDialog({ school, onSuccess }: { school: School; onSucc
         setErrors(res.fieldErrors ? Object.fromEntries(Object.entries(res.fieldErrors).map(([k, v]) => [k, v[0]])) : { name: res.error });
         return;
       }
-      onSuccess();
+      router.refresh();
       setIsOpen(false);
     } catch (err) {
       setErrors({ name: err instanceof Error ? err.message : "Failed to update school" });

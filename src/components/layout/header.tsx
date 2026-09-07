@@ -34,10 +34,10 @@ export function Header({
       <div className="flex items-center gap-2">
         <SchoolMobileNav school={school} items={mobileNavItems} />
         <div>
-        <p className="text-sm text-muted-foreground">
-          {school.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-        </p>
-        <h1 className="text-base font-semibold tracking-tight">Overview</h1>
+          <p className="text-sm text-muted-foreground">
+            {school.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+          </p>
+          <h1 className="text-base font-semibold tracking-tight">Overview</h1>
         </div>
       </div>
 

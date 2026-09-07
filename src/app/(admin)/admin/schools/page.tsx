@@ -3,12 +3,13 @@ import Link from "next/link";
 
 import { requireSuperAdmin } from "@/server/platform-auth";
 import { listSchools } from "@/server/services/admin-schools";
-import { setSchoolStatusAction, archiveSchoolAction } from "@/server/actions/admin";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatDate } from "@/lib/format";
 import { CreateSchoolDialog } from "./create-school-dialog";
+import { StatusAction } from "../schools/[id]/status-action";
+import { ArchiveAction } from "../schools/[id]/archive-action";
 
 export const metadata: Metadata = {
   title: "School Management",
@@ -30,7 +31,7 @@ export default async function AdminSchoolsPage() {
       <PageHeader
         title="School Management"
         description="Create, view, and manage schools across the platform."
-        action={<CreateSchoolDialog onSuccess={() => window.location.reload()} />}
+        action={<CreateSchoolDialog />}
       />
 
       {schools.length === 0 ? (
@@ -38,7 +39,7 @@ export default async function AdminSchoolsPage() {
           icon={Building2}
           title="No schools yet"
           description="Create the first school to get started."
-          action={<CreateSchoolDialog onSuccess={() => window.location.reload()} />}
+          action={<CreateSchoolDialog />}
         />
       ) : (
         <div className="rounded-lg border border-border">
@@ -88,16 +89,11 @@ export default async function AdminSchoolsPage() {
                       >
                         View
                       </Link>
-                      <SchoolStatusAction
-                        schoolId={school.id}
-                        currentStatus={school.status}
-                        onSuccess={() => window.location.reload()}
+                      <StatusAction
+                        school={{ id: school.id, name: school.name, status: school.status }}
                       />
                       {school.status !== "ARCHIVED" && (
-                        <SchoolArchiveAction
-                          schoolId={school.id}
-                          onSuccess={() => window.location.reload()}
-                        />
+                        <ArchiveAction school={{ id: school.id, name: school.name, status: school.status }} />
                       )}
                     </div>
                   </td>
@@ -108,49 +104,6 @@ export default async function AdminSchoolsPage() {
         </div>
       )}
     </div>
-  );
-}
-
-function SchoolStatusAction({
-  schoolId,
-  currentStatus,
-  onSuccess,
-}: {
-  schoolId: string;
-  currentStatus: string;
-  onSuccess: () => void;
-}) {
-  const newStatus = currentStatus === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
-  const label = newStatus === "SUSPENDED" ? "Suspend" : "Activate";
-
-  return (
-    <form action={async () => {
-      const res = await setSchoolStatusAction(schoolId, newStatus);
-      if (res.ok) onSuccess();
-    }}>
-      <button type="submit" className="text-sm text-destructive hover:underline">
-        {label}
-      </button>
-    </form>
-  );
-}
-
-function SchoolArchiveAction({
-  schoolId,
-  onSuccess,
-}: {
-  schoolId: string;
-  onSuccess: () => void;
-}) {
-  return (
-    <form action={async () => {
-      const res = await archiveSchoolAction(schoolId);
-      if (res.ok) onSuccess();
-    }}>
-      <button type="submit" className="text-sm text-muted-foreground hover:text-destructive">
-        Archive
-      </button>
-    </form>
   );
 }
 

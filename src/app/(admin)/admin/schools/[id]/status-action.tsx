@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 
@@ -12,7 +13,8 @@ type School = {
   status: string;
 };
 
-export function StatusAction({ school, onSuccess }: { school: School; onSuccess: () => void }) {
+export function StatusAction({ school }: { school: School }) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
   const newStatus = school.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
   const label = newStatus === "SUSPENDED" ? "Suspend" : "Activate";
@@ -26,7 +28,7 @@ export function StatusAction({ school, onSuccess }: { school: School; onSuccess:
         alert(res.error);
         return;
       }
-      onSuccess();
+      router.refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to update status");
     } finally {

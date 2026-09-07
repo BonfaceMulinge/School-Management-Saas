@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,8 @@ import { Switch } from "@/components/ui/switch";
 
 import { createPlanAction } from "@/server/actions/admin";
 
-export function CreatePlanDialog({ onSuccess }: { onSuccess: () => void }) {
+export function CreatePlanDialog() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [formData, setFormData] = useState({
@@ -67,7 +69,7 @@ export function CreatePlanDialog({ onSuccess }: { onSuccess: () => void }) {
         setErrors(res.fieldErrors ? Object.fromEntries(Object.entries(res.fieldErrors).map(([k, v]) => [k, v[0]])) : { name: res.error });
         return;
       }
-      onSuccess();
+      router.refresh();
       setIsOpen(false);
       setFormData({ name: "", slug: "", description: "", annualPrice: 0, isActive: true, studentLimit: "", staffLimit: "", features: "{}", notes: "" });
     } catch (err) {

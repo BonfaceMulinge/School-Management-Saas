@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { createSchoolAction } from "@/server/actions/admin";
 
-export function CreateSchoolDialog({ onSuccess }: { onSuccess: () => void }) {
+export function CreateSchoolDialog() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [formData, setFormData] = useState<{
@@ -72,7 +74,7 @@ export function CreateSchoolDialog({ onSuccess }: { onSuccess: () => void }) {
         setErrors(res.fieldErrors ? Object.fromEntries(Object.entries(res.fieldErrors).map(([k, v]) => [k, v[0]])) : { name: res.error });
         return;
       }
-      onSuccess();
+      router.refresh();
       setIsOpen(false);
       setFormData({ name: "", slug: "", email: "", phone: "", address: "", currency: "USD", timezone: "UTC", adminEmail: "", adminName: "", adminPassword: "" });
     } catch (err) {

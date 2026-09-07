@@ -12,6 +12,7 @@ import {
 import { getSchoolBySlug } from "@/server/services/schools";
 import { requirePermission } from "@/server/authorization";
 import { PageHeader } from "@/components/ui/page-header";
+import { canAccess } from "@/server/authorization";
 
 export const metadata: Metadata = {
   title: "Report Center",
@@ -59,6 +60,16 @@ export default async function ReportsPage(props: PageProps<"/[school]/reports">)
   if (!school) notFound();
 
   const access = await requirePermission(slug, "dashboard:view", { next: `/${slug}` });
+  const visibleCategories = (
+    await Promise.all(
+      CATEGORIES.map(async (category) => ({
+        category,
+        visible: await canAccess(slug, category.permission),
+      }))
+    )
+  )
+    .filter(({ visible }) => visible)
+    .map(({ category }) => category);
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,7 +79,7 @@ export default async function ReportsPage(props: PageProps<"/[school]/reports">)
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {CATEGORIES.map((c) => {
+        {visibleCategories.map((c) => {
           const Icon = c.icon;
           return (
             <Link

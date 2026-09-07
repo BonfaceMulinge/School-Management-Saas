@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { createSubscriptionAction, listSchoolsForAdmin, listPlansForAdmin } from "@/server/actions/admin";
 
-export function CreateSubscriptionDialog({ onSuccess }: { onSuccess: () => void }) {
+export function CreateSubscriptionDialog() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [formData, setFormData] = useState<{
@@ -84,7 +86,7 @@ export function CreateSubscriptionDialog({ onSuccess }: { onSuccess: () => void 
         setErrors({ schoolId: res.error });
         return;
       }
-      onSuccess();
+      router.refresh();
       setIsOpen(false);
       setFormData({
         schoolId: "",

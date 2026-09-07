@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { setPlatformRoleAction } from "@/server/actions/admin";
 import type { PlatformRole } from "@/generated/prisma/client";
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function PlatformUserActions({ userId, currentRole, isSelf }: Props) {
+  const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
 
   const run = async (label: string, role: PlatformRole | null) => {
@@ -22,7 +24,7 @@ export function PlatformUserActions({ userId, currentRole, isSelf }: Props) {
         window.alert(res.error);
         return;
       }
-      window.location.reload();
+      router.refresh();
     } catch (err) {
       window.alert(err instanceof Error ? err.message : "Failed to update platform role");
     } finally {

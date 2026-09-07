@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -12,12 +13,11 @@ import { provisionSchoolAdminAction } from "@/server/actions/admin";
 export function ProvisionAdminDialog({
   schoolId,
   schoolName,
-  onSuccess,
 }: {
   schoolId: string;
   schoolName: string;
-  onSuccess: () => void;
 }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [formData, setFormData] = useState({ email: "", name: "", password: "" });
@@ -39,7 +39,7 @@ export function ProvisionAdminDialog({
         setError(first ?? res.error ?? "Failed to provision administrator.");
         return;
       }
-      onSuccess();
+      router.refresh();
       setIsOpen(false);
       reset();
     } catch (err) {

@@ -39,9 +39,9 @@ export default async function AdminSchoolDetailPage({ params }: Props) {
         description={school.slug}
         action={
           <>
-            <EditSchoolDialog school={school} onSuccess={() => window.location.reload()} />
-            <StatusAction school={school} onSuccess={() => window.location.reload()} />
-            {school.status !== "ARCHIVED" && <ArchiveAction school={school} onSuccess={() => window.location.reload()} />}
+            <EditSchoolDialog school={school} />
+            <StatusAction school={school} />
+            {school.status !== "ARCHIVED" && <ArchiveAction school={school} />}
           </>
         }
       />
@@ -137,7 +137,6 @@ export default async function AdminSchoolDetailPage({ params }: Props) {
                 <ProvisionAdminDialog
                   schoolId={school.id}
                   schoolName={school.name}
-                  onSuccess={() => window.location.reload()}
                 />
               ) : null}
             </div>
@@ -187,8 +186,8 @@ export default async function AdminSchoolDetailPage({ params }: Props) {
             <div className="rounded-lg border border-border bg-card p-5">
               <h3 className="text-sm font-semibold mb-3">Actions</h3>
               <div className="space-y-2">
-                <StatusAction school={school} onSuccess={() => window.location.reload()} />
-                <ArchiveAction school={school} onSuccess={() => window.location.reload()} />
+                <StatusAction school={school} />
+                <ArchiveAction school={school} />
               </div>
             </div>
           )}

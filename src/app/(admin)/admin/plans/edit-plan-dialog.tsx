@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ export type EditablePlan = {
 };
 
 export function EditPlanDialog({ plan }: { plan: EditablePlan }) {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [formData, setFormData] = useState({
@@ -83,7 +85,7 @@ export function EditPlanDialog({ plan }: { plan: EditablePlan }) {
         setErrors(res.fieldErrors ? Object.fromEntries(Object.entries(res.fieldErrors).map(([k, v]) => [k, v[0]])) : { name: res.error });
         return;
       }
-      window.location.reload();
+      router.refresh();
     } catch (err) {
       setErrors({ name: err instanceof Error ? err.message : "Failed to update plan" });
     } finally {
