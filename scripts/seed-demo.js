@@ -23,25 +23,40 @@ async function seed() {
 
   if (schoolIds.length) {
     const p = schoolIds.map((_, i) => `$${i + 1}`).join(",");
+    // Delete dependent tables first
     await client.query(`DELETE FROM "AuditLog" WHERE "schoolId" IN (${p})`, schoolIds);
+    await client.query(`DELETE FROM "SchoolSubscription" WHERE "schoolId" IN (${p})`, schoolIds);
+    await client.query(`DELETE FROM "SchoolSettings" WHERE "schoolId" IN (${p})`, schoolIds);
+    await client.query(`DELETE FROM "SchoolOnboarding" WHERE "schoolId" IN (${p})`, schoolIds);
     await client.query(`DELETE FROM "School" WHERE id IN (${p})`, schoolIds);
   }
+
+  // Delete subscription plans created by these users (via createdById)
+  if (userIds.length) {
+    const p = userIds.map((_, i) => `$${i + 1}`).join(",");
+    await client.query(`DELETE FROM "SubscriptionPlan" WHERE "createdById" IN (${p})`, userIds);
+  }
+
+  // Now delete users
   if (userIds.length) {
     const p = userIds.map((_, i) => `$${i + 1}`).join(",");
     await client.query(`DELETE FROM "AuditLog" WHERE "actorId" IN (${p})`, userIds);
     await client.query(`DELETE FROM "User" WHERE id IN (${p})`, userIds);
   }
-  await client.query('DELETE FROM "SubscriptionPlan" WHERE slug = $1', ["foundation"]);
 
   // ---- Users ----
   const superUserId = makeId("usr");
   const adminUserId = makeId("usr");
   const teacherUserId = makeId("usr");
+  const studentUserId = makeId("usr");
+  const parentUserId = makeId("usr");
 
-  const [superHash, adminHash, teacherHash] = await Promise.all([
+  const [superHash, adminHash, teacherHash, studentHash, parentHash] = await Promise.all([
     hash("SuperAdmin!2026", PASSWORD_ROUNDS),
     hash("Admin!2026", PASSWORD_ROUNDS),
     hash("Teacher!2026", PASSWORD_ROUNDS),
+    hash("Student!2026", PASSWORD_ROUNDS),
+    hash("Parent!2026", PASSWORD_ROUNDS),
   ]);
 
   await client.query(
@@ -55,6 +70,14 @@ async function seed() {
   await client.query(
     'INSERT INTO "User" (id, email, name, "passwordHash", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$5)',
     [teacherUserId, "teacher@demo.local", "Demo Teacher", teacherHash, ts]
+  );
+  await client.query(
+    'INSERT INTO "User" (id, email, name, "passwordHash", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$5)',
+    [studentUserId, "student@demo.local", "Demo Student", studentHash, ts]
+  );
+  await client.query(
+    'INSERT INTO "User" (id, email, name, "passwordHash", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$5)',
+    [parentUserId, "parent@demo.local", "Demo Parent", parentHash, ts]
   );
 
   // ---- Plan + School + subscription ----
@@ -85,8 +108,8 @@ async function seed() {
   );
 
   await client.query(
-    'INSERT INTO "Membership" (id, "schoolId", "userId", role, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$5), ($6,$2,$7,$8,$5,$5)',
-    [makeId("mem"), schoolId, adminUserId, "SCHOOL_ADMIN", ts, makeId("mem"), teacherUserId, "TEACHER"]
+    'INSERT INTO "Membership" (id, "schoolId", "userId", role, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$5), ($6,$2,$7,$8,$5,$5), ($9,$2,$10,$11,$5,$5), ($12,$2,$13,$14,$5,$5)',
+    [makeId("mem"), schoolId, adminUserId, "SCHOOL_ADMIN", ts, makeId("mem"), teacherUserId, "TEACHER", makeId("mem"), studentUserId, "STUDENT", makeId("mem"), parentUserId, "PARENT"]
   );
 
   // ---- Academics ----
@@ -100,40 +123,101 @@ async function seed() {
     'INSERT INTO "Term" (id, "academicYearId", name, "startDate", "endDate", "isActive", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,true,$6,$6)',
     [termId, yearId, "Term 1", ymd(new Date("2026-01-10")), ymd(new Date("2026-04-10")), ts]
   );
+  const term2Id = makeId("trm2");
+  await client.query(
+    'INSERT INTO "Term" (id, "academicYearId", name, "startDate", "endDate", "isActive", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,true,$6,$6)',
+    [term2Id, yearId, "Term 2", ymd(new Date("2026-04-20")), ymd(new Date("2026-07-20")), ts]
+  );
 
-  const classId = makeId("cls");
-  await client.query(
-    'INSERT INTO "Class" (id, "schoolId", name, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$4)',
-    [classId, schoolId, "Grade 5", ts]
-  );
-  const subjectId = makeId("subj");
-  await client.query(
-    'INSERT INTO "Subject" (id, "schoolId", name, code, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$5)',
-    [subjectId, schoolId, "Mathematics", "MATH", ts]
-  );
-  await client.query(
-    'INSERT INTO "TeacherAssignment" (id, "schoolId", "teacherId", "classId", "subjectId", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$6)',
-    [makeId("ta"), schoolId, teacherUserId, classId, subjectId, ts]
-  );
+  // Multiple classes and streams
+  const classIds = [];
+  const streamIds = [];
+  for (const [name, streams] of [["Grade 5", ["A", "B"]], ["Grade 6", ["A"]], ["Grade 7", ["A", "B"]]]) {
+    const clsId = makeId("cls");
+    await client.query(
+      'INSERT INTO "Class" (id, "schoolId", name, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$4)',
+      [clsId, schoolId, name, ts]
+    );
+    classIds.push(clsId);
+    for (const streamName of streams) {
+      const streamId = makeId("str");
+      await client.query(
+        'INSERT INTO "Stream" (id, "classId", name, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$4)',
+        [streamId, clsId, streamName, ts]
+      );
+      streamIds.push({ classId: clsId, streamId, streamName });
+    }
+  }
+
+  // Multiple subjects
+  const subjectIds = {};
+  for (const [name, code] of [
+    ["Mathematics", "MATH"],
+    ["English", "ENG"],
+    ["Science", "SCI"],
+    ["Kiswahili", "KIS"],
+    ["Social Studies", "SOC"],
+  ]) {
+    const subId = makeId("subj");
+    await client.query(
+      'INSERT INTO "Subject" (id, "schoolId", name, code, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$5)',
+      [subId, schoolId, name, code, ts]
+    );
+    subjectIds[name] = subId;
+  }
+
+  // Teacher assignments - teacher teaches Math and Science in Grade 5A and Grade 6A
+  const grade5a = streamIds.find(s => s.streamName === "A" && s.classId === classIds[0]);
+  const grade6a = streamIds.find(s => s.streamName === "A" && s.classId === classIds[1]);
+  for (const subj of ["Mathematics", "Science"]) {
+    await client.query(
+      'INSERT INTO "TeacherAssignment" (id, "schoolId", "teacherId", "classId", "subjectId", "streamId", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$7)',
+      [makeId("ta"), schoolId, teacherUserId, grade5a.classId, subjectIds[subj], grade5a.streamId, ts]
+    );
+    await client.query(
+      'INSERT INTO "TeacherAssignment" (id, "schoolId", "teacherId", "classId", "subjectId", "streamId", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$7)',
+      [makeId("ta"), schoolId, teacherUserId, grade6a.classId, subjectIds[subj], grade6a.streamId, ts]
+    );
+  }
 
   // ---- Students ----
+  const students = [
+    ["Amina", "Diallo", "2026-001", "FEMALE", grade5a.classId, grade5a.streamId, studentUserId, parentUserId], // linked to student@demo.local + parent@demo.local
+    ["James", "Otieno", "2026-002", "MALE", grade5a.classId, grade5a.streamId, null, parentUserId], // linked to parent@demo.local
+    ["Sofia", "Rossi", "2026-003", "FEMALE", grade5a.classId, grade5a.streamId, null, null],
+    ["Liam", "Mwangi", "2026-004", "MALE", grade5a.classId, grade5a.streamId, null, null],
+    ["Fatima", "Ali", "2026-005", "FEMALE", grade6a.classId, grade6a.streamId, null, null],
+  ];
+
   const studentIds = [];
-  for (const [first, last, no] of [["Amina", "Diallo", "2026-001"], ["James", "Otieno", "2026-002"], ["Sofia", "Rossi", "2026-003"]]) {
+  for (const [first, last, no, gender, clsId, strmId, studentUserId, guardianUserId] of students) {
     const sid = makeId("std");
     await client.query(
-      'INSERT INTO "Student" (id, "schoolId", "firstName", "lastName", "studentNo", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$6)',
-      [sid, schoolId, first, last, no, ts]
+      'INSERT INTO "Student" (id, "schoolId", "firstName", "lastName", "studentNo", gender, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$7)',
+      [sid, schoolId, first, last, no, gender, ts]
     );
     await client.query(
-      'INSERT INTO "Enrollment" (id, "schoolId", "studentId", "classId", "academicYearId", "termId", status, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$8)',
-      [makeId("enr"), schoolId, sid, classId, yearId, termId, "ACTIVE", ts]
+      'INSERT INTO "Enrollment" (id, "schoolId", "studentId", "classId", "streamId", "academicYearId", "termId", status, "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$9)',
+      [makeId("enr"), schoolId, sid, clsId, strmId, yearId, termId, "ACTIVE", ts]
     );
     studentIds.push(sid);
+    if (guardianUserId) {
+      await client.query(
+        'INSERT INTO "Guardian" (id, "schoolId", "studentId", "guardianUserId", relationship, "isPrimary", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$7)',
+        [makeId("grd"), schoolId, sid, guardianUserId, "Parent", true, ts]
+      );
+    }
   }
+
+  // Link the first student (Amina) to the student user
+  await client.query(
+    'INSERT INTO "Guardian" (id, "schoolId", "studentId", "guardianUserId", relationship, "isPrimary", "createdAt", "updatedAt") VALUES ($1,$2,$3,$4,$5,$6,$7,$7)',
+    [makeId("grd"), schoolId, studentIds[0], studentUserId, "Self", true, ts]
+  );
 
   console.log(
     JSON.stringify(
-      { schoolId, superUserId, adminUserId, teacherUserId, planId, subId, students: studentIds.length },
+      { schoolId, superUserId, adminUserId, teacherUserId, studentUserId, parentUserId, planId, subId, students: studentIds.length },
       null,
       2
     )

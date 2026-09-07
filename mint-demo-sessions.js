@@ -17,7 +17,7 @@ async function main() {
     "parent@demo.local",
   ];
   const { rows } = await client.query(
-    "SELECT id, email FROM \"User\" WHERE email = ANY($1)",
+    'SELECT id, email FROM "User" WHERE email = ANY($1)',
     [emails]
   );
   const out = [];
