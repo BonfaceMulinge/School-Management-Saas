@@ -44,7 +44,11 @@ export function DashboardShell({
           user={user}
           roleLabel={roleLabel}
           showSettings={showSettings}
-          mobileNavItems={navigation}
+          mobileNavItems={navigation.map(({ title, href, disabled }) => ({
+            title,
+            href,
+            disabled,
+          }))}
         />
         <main className="flex-1 px-6 py-6">{children}</main>
       </div>
