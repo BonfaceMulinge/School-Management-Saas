@@ -14,7 +14,12 @@ function createPrismaClient() {
     );
   }
 
-  const adapter = new PrismaPg({ connectionString });
+  const adapter = new PrismaPg({
+    connectionString,
+    max: 1,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
+  });
 
   return new PrismaClient({
     adapter,
