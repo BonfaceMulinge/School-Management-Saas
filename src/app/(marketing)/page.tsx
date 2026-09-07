@@ -2,7 +2,6 @@ import "server-only";
 
 import Link from "next/link";
 import {
-  BarChart3,
   GraduationCap,
   Megaphone,
   Users,
@@ -43,8 +42,6 @@ export default async function MarketingPage() {
   const session = await getCurrentSession();
   let ctaHref = "/login";
   let ctaText = "Sign in";
-  let secondaryText = "Sign in";
-  let secondaryHref = "/login";
 
   if (session) {
     if (session.user.platformRole) {
@@ -60,8 +57,6 @@ export default async function MarketingPage() {
         ctaText = "Open Dashboard";
       }
     }
-    secondaryText = ctaText;
-    secondaryHref = ctaHref;
   }
 
   return (
@@ -72,14 +67,6 @@ export default async function MarketingPage() {
             <GraduationCap className="size-4" aria-hidden="true" />
           </span>
           <span className="text-base font-semibold tracking-tight">{APP_NAME}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button render={<Link href={secondaryHref} />} variant="outline" size="sm">
-            {secondaryText}
-          </Button>
-          <Button render={<Link href={ctaHref} />} variant="outline" size="sm">
-            {ctaText}
-          </Button>
         </div>
       </header>
 
@@ -109,21 +96,6 @@ export default async function MarketingPage() {
           ))}
         </section>
 
-        <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-8 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight">
-              Complete School Management
-            </h2>
-            <p className="mt-1 max-w-lg text-muted-foreground">
-              Next.js, TypeScript, Tailwind CSS, shadcn/ui, PostgreSQL and Prisma are
-              configured with a scalable multi-tenancy foundation. Modules for students,
-              teachers, exams, results, finance, communication and reports are live.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <BarChart3 className="size-4" aria-hidden="true" />
-          </div>
-        </section>
       </main>
 
       <footer className="border-t border-border">
