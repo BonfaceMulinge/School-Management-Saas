@@ -25,7 +25,6 @@ export function CreateSchoolDialog() {
     timezone: string;
     adminEmail: string;
     adminName: string;
-    adminPassword: string;
   }>({
     name: "",
     slug: "",
@@ -36,9 +35,9 @@ export function CreateSchoolDialog() {
     timezone: "UTC",
     adminEmail: "",
     adminName: "",
-    adminPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [credentials, setCredentials] = useState<{ email: string; temporaryPassword: string } | null>(null);
 
   const handleChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -53,8 +52,6 @@ export function CreateSchoolDialog() {
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Invalid email format";
     if (formData.adminEmail) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.adminEmail)) newErrors.adminEmail = "Invalid email format";
-      if (!formData.adminPassword) newErrors.adminPassword = "Password is required when provisioning an admin";
-      else if (formData.adminPassword.length < 8) newErrors.adminPassword = "Password must be at least 8 characters";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -75,8 +72,8 @@ export function CreateSchoolDialog() {
         return;
       }
       router.refresh();
-      setIsOpen(false);
-      setFormData({ name: "", slug: "", email: "", phone: "", address: "", currency: "USD", timezone: "UTC", adminEmail: "", adminName: "", adminPassword: "" });
+      setCredentials(res.data?.administrator ?? null);
+      setFormData({ name: "", slug: "", email: "", phone: "", address: "", currency: "USD", timezone: "UTC", adminEmail: "", adminName: "" });
     } catch (err) {
       setErrors({ name: err instanceof Error ? err.message : "Failed to create school" });
     } finally {
@@ -94,8 +91,21 @@ export function CreateSchoolDialog() {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
-            <h2 className="mb-4 text-lg font-semibold">Create School</h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <h2 className="mb-4 text-lg font-semibold">{credentials ? "Administrator credentials" : "Create School"}</h2>
+            {credentials ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Save these credentials now. The temporary password is shown only once and expires in 24 hours.
+                </p>
+                <div className="rounded-md border border-border bg-muted/40 p-4 text-sm">
+                  <p><span className="font-medium">Email:</span> {credentials.email}</p>
+                  <p className="mt-2"><span className="font-medium">Temporary password:</span> {credentials.temporaryPassword}</p>
+                </div>
+                <Button type="button" onClick={() => { setCredentials(null); setIsOpen(false); }}>
+                  Done
+                </Button>
+              </div>
+            ) : <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="name">Name</Label>
                 <Input
@@ -197,11 +207,7 @@ export function CreateSchoolDialog() {
                   First administrator{" "}
                   <span className="ml-1 text-xs font-normal text-muted-foreground">(optional)</span>
                 </p>
-                <p className="mt-1 mb-3 text-xs text-muted-foreground">
-                  Provision the school&apos;s first SCHOOL_ADMIN after creation.
-                  Reuses an existing account when the email matches; the
-                  password is only set if the account has none.
-                </p>
+                <p className="mt-1 mb-3 text-xs text-muted-foreground">A secure temporary password will be generated and shown once after creation.</p>
                 <div>
                   <Label htmlFor="adminEmail">Admin email</Label>
                   <Input
@@ -226,19 +232,6 @@ export function CreateSchoolDialog() {
                     disabled={pending}
                   />
                 </div>
-                <div className="mt-3">
-                  <Label htmlFor="adminPassword">Temporary password</Label>
-                  <Input
-                    id="adminPassword"
-                    name="adminPassword"
-                    type="password"
-                    value={formData.adminPassword}
-                    onChange={handleInputChange}
-                    placeholder="At least 8 characters"
-                    disabled={pending}
-                  />
-                  {errors.adminPassword && <p className="mt-1 text-sm text-destructive">{errors.adminPassword}</p>}
-                </div>
               </div>
 
               <div className="flex justify-end gap-2">
@@ -256,7 +249,7 @@ export function CreateSchoolDialog() {
                   )}
                 </Button>
               </div>
-            </form>
+            </form>}
           </div>
         </div>
       )}

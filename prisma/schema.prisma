@@ -90,6 +90,9 @@ model User {
   email        String        @unique
   name         String?
   passwordHash String?
+  mustChangePassword Boolean @default(false)
+  temporaryPasswordExpiresAt DateTime?
+  passwordChangedAt DateTime?
   avatarUrl    String?
   emailVerified DateTime?
   /// Optional platform-level role (not scoped to a school). When set, the

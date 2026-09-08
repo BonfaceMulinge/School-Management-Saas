@@ -16,7 +16,7 @@ function createPrismaClient() {
 
   const adapter = new PrismaPg({
     connectionString,
-    max: 1,
+    max: process.env.NODE_ENV === "test" ? 5 : 1,
     connectionTimeoutMillis: 10_000,
     idleTimeoutMillis: 30_000,
   });

@@ -20,11 +20,12 @@ export function ProvisionAdminDialog({
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const [formData, setFormData] = useState({ email: "", name: "", password: "" });
+  const [formData, setFormData] = useState({ email: "", name: "" });
   const [error, setError] = useState<string | null>(null);
+  const [credentials, setCredentials] = useState<{ email: string; temporaryPassword: string } | null>(null);
 
   const reset = () => {
-    setFormData({ email: "", name: "", password: "" });
+    setFormData({ email: "", name: "" });
     setError(null);
   };
 
@@ -40,6 +41,7 @@ export function ProvisionAdminDialog({
         return;
       }
       router.refresh();
+      setCredentials(res.data ?? null);
       setIsOpen(false);
       reset();
     } catch (err) {
@@ -55,6 +57,20 @@ export function ProvisionAdminDialog({
         <UserPlus className="mr-2 size-4" aria-hidden="true" />
         Provision admin
       </Button>
+
+      {credentials ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg">
+            <h2 className="text-lg font-semibold">Administrator credentials</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Save these credentials now. The temporary password expires in 24 hours.</p>
+            <div className="mt-4 rounded-md border border-border bg-muted/40 p-4 text-sm">
+              <p><span className="font-medium">Email:</span> {credentials.email}</p>
+              <p className="mt-2"><span className="font-medium">Temporary password:</span> {credentials.temporaryPassword}</p>
+            </div>
+            <Button className="mt-4" onClick={() => setCredentials(null)}>Done</Button>
+          </div>
+        </div>
+      ) : null}
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -89,25 +105,7 @@ export function ProvisionAdminDialog({
                   disabled={pending}
                 />
               </div>
-              <div>
-                <Label htmlFor="admin-password">Temporary password</Label>
-                <Input
-                  id="admin-password"
-                  type="password"
-                  required
-                  minLength={8}
-                  value={formData.password}
-                  onChange={(e) => setFormData((p) => ({ ...p, password: e.target.value }))}
-                  placeholder="At least 8 characters"
-                  disabled={pending}
-                />
-                {formData.email.trim() && !error && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    If {formData.email.trim()} already has an account, this
-                    password is ignored.
-                  </p>
-                )}
-              </div>
+              <p className="text-xs text-muted-foreground">A secure temporary password will be generated and shown once after provisioning.</p>
               {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
               <div className="flex justify-end gap-2">
                 <Button

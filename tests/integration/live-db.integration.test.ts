@@ -48,6 +48,7 @@ function makeAccess(
     name: user.name,
     avatarUrl: null,
     platformRole: null,
+    mustChangePassword: false,
   };
   return {
     user: sessionUser,

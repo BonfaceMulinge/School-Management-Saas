@@ -15,7 +15,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
-    "db:validate": "prisma validate"
+    "db:validate": "prisma validate",
+    "db:ensure-v1-plan": "node scripts/ensure-version-one-plan.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

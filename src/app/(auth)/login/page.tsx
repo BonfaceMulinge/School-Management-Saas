@@ -17,7 +17,12 @@ export default async function LoginPage(
   const next = safeRedirect(searchParams?.next);
 
   const session = await getCurrentSession();
-  if (session) redirect(next ?? "/");
+  if (session) {
+    if (session.user.mustChangePassword) {
+      redirect(`/first-login${next ? `?next=${encodeURIComponent(next)}` : ""}`);
+    }
+    redirect(next ?? "/");
+  }
 
   return (
     <div className="flex min-h-svh items-center justify-center bg-muted/30 px-4 py-12">

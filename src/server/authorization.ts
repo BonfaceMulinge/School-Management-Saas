@@ -139,6 +139,9 @@ export async function requireSchoolAccess(
 ): Promise<SchoolAccess> {
   const session = await getCurrentSession();
   if (!session) redirect(loginUrl(opts?.next ?? `/${slug}`));
+  if (session.user.mustChangePassword) {
+    redirect(`/first-login?next=${encodeURIComponent(opts?.next ?? `/${slug}`)}`);
+  }
 
   const access = await resolveAccess(slug, session);
   if (!access.schoolId) redirect("/not-found");

@@ -82,17 +82,11 @@ const schoolShape = z.object({
   primaryColor: z.string().trim().max(16).optional().or(z.literal("")),
   adminEmail: z.email("Enter a valid administrator email.").optional().or(z.literal("")),
   adminName: z.string().trim().max(120).optional().or(z.literal("")),
-  adminPassword: z
-    .string()
-    .min(8, "Password must be at least 8 characters.")
-    .max(200)
-    .optional()
-    .or(z.literal("")),
 });
 
 export async function createSchoolAction(
   input: unknown
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<{ id: string; administrator?: { email: string; temporaryPassword: string } }>> {
   const access = await assertSuperAdmin();
   const parsed = schoolShape.safeParse(input);
   if (!parsed.success) {
@@ -127,19 +121,21 @@ export async function createSchoolAction(
   });
 
   if (data.adminEmail) {
-    if (!data.adminPassword) {
-      return fail("A temporary password is required when provisioning an administrator.", {
-        adminPassword: ["Required when an administrator email is set."],
-      });
-    }
     const provisioned = await provisionSchoolAdminWithAudit({
       actorId: access.user.id,
       schoolId: school.id,
       email: data.adminEmail,
       name: data.adminName || undefined,
-      password: data.adminPassword,
     });
     if (!provisioned.ok) return fail(provisioned.error);
+    for (const p of adminPaths()) revalidatePath(p);
+    return ok({
+      id: school.id,
+      administrator: {
+        email: provisioned.email,
+        temporaryPassword: provisioned.temporaryPassword,
+      },
+    });
   }
 
   for (const p of adminPaths()) revalidatePath(p);
@@ -251,8 +247,8 @@ export async function provisionSchoolAdminAction(input: {
   schoolId: string;
   email: string;
   name?: string;
-  password: string;
-}): Promise<ActionResult> {
+  password?: never;
+}): Promise<ActionResult<{ email: string; temporaryPassword: string }>> {
   const access = await assertSuperAdmin();
 
   const parsed = z
@@ -260,7 +256,6 @@ export async function provisionSchoolAdminAction(input: {
       schoolId: z.string().min(1, "School is required."),
       email: z.email("Enter a valid email address.").trim().toLowerCase(),
       name: z.string().trim().max(120).optional().or(z.literal("")),
-      password: z.string().min(8, "Password must be at least 8 characters.").max(200),
     })
     .safeParse(input);
   if (!parsed.success) {
@@ -273,13 +268,15 @@ export async function provisionSchoolAdminAction(input: {
     schoolId: data.schoolId,
     email: data.email,
     name: data.name || undefined,
-    password: data.password,
   });
   if (!provisioned.ok) return fail(provisioned.error);
 
   for (const p of adminPaths(data.schoolId)) revalidatePath(p);
   revalidatePath("/admin/users");
-  return ok();
+  return ok({
+    email: provisioned.email,
+    temporaryPassword: provisioned.temporaryPassword,
+  });
 }
 
 // ---------------------------------------------------------------------------

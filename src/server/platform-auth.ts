@@ -34,6 +34,7 @@ export async function requireSuperAdmin(
   if (!session) redirect(opts?.next ?? "/login");
 
   const { user } = session;
+  if (user.mustChangePassword) redirect(`/first-login?next=${encodeURIComponent(opts?.next ?? "/admin")}`);
   if (user.platformRole !== "SUPER_ADMIN") {
     redirect("/");
   }
@@ -56,6 +57,7 @@ export async function requirePlatformStaff(
   if (!session) redirect(opts?.next ?? "/login");
 
   const { user } = session;
+  if (user.mustChangePassword) redirect(`/first-login?next=${encodeURIComponent(opts?.next ?? "/")}`);
   if (user.platformRole !== "SUPER_ADMIN" && user.platformRole !== "SUPPORT") {
     redirect("/");
   }

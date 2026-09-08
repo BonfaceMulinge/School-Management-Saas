@@ -18,6 +18,7 @@ export type SessionUser = {
   name: string | null;
   avatarUrl: string | null;
   platformRole: "SUPER_ADMIN" | "SUPPORT" | null;
+  mustChangePassword: boolean;
 };
 
 export type AuthSession = {
@@ -54,6 +55,7 @@ export const getCurrentSession = cache(
         name: true,
         avatarUrl: true,
         platformRole: true,
+        mustChangePassword: true,
       },
     });
     if (!user) return null;
