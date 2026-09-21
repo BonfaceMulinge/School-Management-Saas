@@ -4,7 +4,7 @@ import { getSchoolBySlug } from "@/server/services/schools";
 import { getSubscriptionBySchoolId } from "@/server/services/school-subscriptions";
 import { checkSchoolSubscriptionAccess } from "@/server/services/subscription-enforcement";
 import { requirePermission } from "@/server/authorization";
-import { formatMoney } from "@/lib/format";
+import { formatMoneyMinor } from "@/lib/format";
 
 import { SubscriptionStatusCard } from "./subscription-status-card";
 
@@ -24,7 +24,7 @@ export default async function SubscriptionSettingsPage(
   ]);
 
   const price = subscription
-    ? formatMoney(subscription.plan.annualPrice, school.currency)
+    ? formatMoneyMinor(subscription.plan.annualPrice, school.currency)
     : "—";
 
   return (

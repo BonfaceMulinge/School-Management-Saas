@@ -218,6 +218,15 @@ export async function assertSchoolAccess(
     throw new ForbiddenError("You do not have access to this school.");
   }
 
+  // School-scoped users are blocked when the school is suspended or archived,
+  // matching the dashboard layout. Platform staff bypass so they can triage.
+  if (!access.isPlatformStaff) {
+    const school = await getSchoolBySlug(slug);
+    if (!school || school.status !== "ACTIVE") {
+      throw new ForbiddenError("This school is not active.");
+    }
+  }
+
   return access;
 }
 

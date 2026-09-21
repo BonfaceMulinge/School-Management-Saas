@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 
 import { requireSuperAdmin } from "@/server/platform-auth";
 import { getSchoolById } from "@/server/services/admin-schools";
+import { listSubscriptionEvents } from "@/server/services/school-subscriptions";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatDateTime } from "@/lib/format";
 import { EditSchoolDialog } from "./edit-school-dialog";
 import { StatusAction } from "./status-action";
 import { ArchiveAction } from "./archive-action";
@@ -23,7 +24,10 @@ export default async function AdminSchoolDetailPage({ params }: Props) {
   await requireSuperAdmin({ next: "/admin/schools" });
   const { id } = await params;
 
-  const school = await getSchoolById(id);
+  const [school, subscriptionEvents] = await Promise.all([
+    getSchoolById(id),
+    listSubscriptionEvents(id),
+  ]);
   if (!school) notFound();
 
   const statusBadge: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -115,6 +119,11 @@ export default async function AdminSchoolDetailPage({ params }: Props) {
                           {sub.status} · {sub.endDate ? `Ends ${formatDate(sub.endDate)}` : "No end date"}
                           {sub.gracePeriodEnd && ` · Grace until ${formatDate(sub.gracePeriodEnd)}`}
                         </p>
+                        {(sub.paymentRef || sub.providerReference) && (
+                          <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                            {sub.paymentRef ?? sub.providerReference}
+                          </p>
+                        )}
                       </div>
                       <Badge variant={
                         sub.status === "ACTIVE" || sub.status === "TRIAL" ? "default" :
@@ -126,6 +135,48 @@ export default async function AdminSchoolDetailPage({ params }: Props) {
                     {sub.notes && <p className="text-sm text-muted-foreground">{sub.notes}</p>}
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {subscriptionEvents.length > 0 && (
+            <div className="rounded-lg border border-border bg-card p-5">
+              <h3 className="text-sm font-semibold mb-4">Subscription history</h3>
+              <div className="overflow-x-auto rounded border border-border">
+                <table className="min-w-full divide-y divide-border text-sm">
+                  <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-2 text-left font-medium">Time</th>
+                      <th className="px-4 py-2 text-left font-medium">Event</th>
+                      <th className="px-4 py-2 text-left font-medium">Status</th>
+                      <th className="px-4 py-2 text-left font-medium">Plan</th>
+                      <th className="px-4 py-2 text-left font-medium">Reason</th>
+                      <th className="px-4 py-2 text-left font-medium">Actor</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border bg-card">
+                    {subscriptionEvents.map((ev) => (
+                      <tr key={ev.id}>
+                        <td className="px-4 py-2 text-xs font-mono text-muted-foreground whitespace-nowrap">
+                          {formatDateTime(ev.createdAt)}
+                        </td>
+                        <td className="px-4 py-2">
+                          <Badge variant={
+                            ev.type === "CREATED" || ev.type === "RENEWED" ? "default" : "secondary"
+                          }>
+                            {ev.type.replace(/_/g, " ")}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2 text-xs whitespace-nowrap">
+                          {ev.fromStatus ?? "—"} → {ev.toStatus}
+                        </td>
+                        <td className="px-4 py-2 text-xs">{ev.planName}</td>
+                        <td className="px-4 py-2 text-xs text-muted-foreground">{ev.reason ?? "—"}</td>
+                        <td className="px-4 py-2 text-xs">{ev.actorName ?? "Unknown"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}

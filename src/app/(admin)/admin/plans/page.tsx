@@ -6,7 +6,7 @@ import { updatePlanAction, deletePlanAction } from "@/server/actions/admin";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { formatMoney } from "@/lib/format";
+import { formatMoneyMinor } from "@/lib/format";
 import { CreatePlanDialog } from "./create-plan-dialog";
 import { EditPlanDialog, type EditablePlan } from "./edit-plan-dialog";
 
@@ -16,6 +16,15 @@ export const metadata: Metadata = {
 
 export default async function AdminPlansPage() {
   await requireSuperAdmin({ next: "/admin" });
+
+  async function setPlanActive(id: string) {
+    "use server";
+    await updatePlanAction(id, { isActive: true });
+  }
+  async function removePlan(id: string) {
+    "use server";
+    await deletePlanAction(id);
+  }
 
   const plans = await listPlans(true);
 
@@ -68,7 +77,7 @@ export default async function AdminPlansPage() {
                       <div className="font-medium">{plan.name}</div>
                       <div className="text-xs text-muted-foreground">{plan.slug}</div>
                     </td>
-                    <td className="px-4 py-3">{formatMoney(plan.annualPrice, "USD")} / year</td>
+                    <td className="px-4 py-3">{formatMoneyMinor(plan.annualPrice, "USD")} / year</td>
                     <td className="px-4 py-3 text-xs text-muted-foreground">
                       {plan.studentLimit?.toLocaleString() ?? "Unlimited"}
                     </td>
@@ -85,20 +94,14 @@ export default async function AdminPlansPage() {
                       <div className="flex items-center justify-end gap-3">
                         <EditPlanDialog plan={editable} />
                         {!plan.isActive && (
-                          <form action={async () => {
-                            const res = await updatePlanAction(plan.id, { isActive: true });
-                            if (!res.ok) return;
-                          }}>
+                          <form action={setPlanActive.bind(null, plan.id)}>
                             <button type="submit" className="text-sm text-primary hover:underline">
                               Activate
                             </button>
                           </form>
                         )}
                         {plan.isActive && plan._count.subscriptions === 0 && (
-                          <form action={async () => {
-                            const res = await deletePlanAction(plan.id);
-                            if (!res.ok) return;
-                          }}>
+                          <form action={removePlan.bind(null, plan.id)}>
                             <button type="submit" className="text-sm text-destructive hover:underline">
                               Delete
                             </button>

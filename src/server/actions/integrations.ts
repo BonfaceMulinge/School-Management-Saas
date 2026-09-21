@@ -16,7 +16,7 @@ import {
 } from "@/server/integrations/payments/payment-service";
 import { getSubscriptionBySchoolId } from "@/server/services/school-subscriptions";
 import { createAuditLog } from "@/server/services/audit-log";
-import { makeIdempotencyKey, toMinorUnits } from "@/lib/integrations";
+import { makeIdempotencyKey } from "@/lib/integrations";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 
 const ALLOWED_PROVIDERS = ["mock"] as const;
@@ -121,7 +121,7 @@ export async function initiateSubscriptionPaymentAction(schoolId: string): Promi
   });
   const currency = school?.currency ?? "USD";
 
-  const amountMinor = toMinorUnits(String(sub.plan.annualPrice));
+  const amountMinor = sub.plan.annualPrice;
   if (amountMinor <= 0) {
     return fail("This plan has no price to charge.");
   }
@@ -131,7 +131,7 @@ export async function initiateSubscriptionPaymentAction(schoolId: string): Promi
     "subscription",
     schoolId,
     sub.planId,
-    toMinorUnits(String(sub.plan.annualPrice)),
+    sub.plan.annualPrice,
     new Date().toISOString().slice(0, 10),
   ]);
 

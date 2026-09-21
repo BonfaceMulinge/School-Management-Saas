@@ -11,6 +11,8 @@ export const metadata: Metadata = {
   title: "Audit Log",
 };
 
+const PAGE_SIZE = 50;
+
 const ACTION_BADGE: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
   SCHOOL_CREATE: "default",
   SCHOOL_UPDATE: "secondary",
@@ -29,14 +31,41 @@ const ACTION_BADGE: Record<string, "default" | "secondary" | "destructive" | "ou
   SCHOOL_ADMIN_PROVISION: "default",
   ONBOARDING_STEP: "secondary",
   FINANCIAL_ACTION: "secondary",
+  PAYMENT_INITIATED: "default",
+  PAYMENT_VERIFIED: "default",
+  PAYMENT_FAILED: "destructive",
+  WEBHOOK_RECEIVED: "secondary",
+  INTEGRATION_CONFIG_CHANGE: "secondary",
   DATA_EXPORT: "secondary",
   OTHER: "outline",
 };
 
-export default async function AdminAuditPage() {
+function single(v: string | string[] | undefined): string | undefined {
+  return typeof v === "string" && v ? v : undefined;
+}
+
+export default async function AdminAuditPage(
+  props: PageProps<"/admin/audit">
+) {
   await requireSuperAdmin({ next: "/admin" });
 
-  const { logs, total } = await listAuditLogs({ page: 1, take: 50 });
+  const searchParams = await props.searchParams;
+  const page = Math.max(1, Number(single(searchParams.page)) || 1);
+
+  const { logs, total } = await listAuditLogs({ page, take: PAGE_SIZE });
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+
+  const queryString = (overrides: Record<string, string>) => {
+    const params = new URLSearchParams();
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v) params.set(k, v);
+      else params.delete(k);
+    }
+    const s = params.toString();
+    return s ? `?${s}` : "";
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,7 +77,8 @@ export default async function AdminAuditPage() {
       <div className="flex flex-col gap-4">
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">
-            Showing {logs.length} of {total} total entries. Most recent first.
+            Showing {(safePage - 1) * PAGE_SIZE + 1}–
+            {Math.min(safePage * PAGE_SIZE, total)} of {total} total entries. Most recent first.
           </p>
         </div>
 
@@ -59,53 +89,81 @@ export default async function AdminAuditPage() {
             description="Administrative actions will be logged here."
           />
         ) : (
-          <div className="rounded-lg border border-border">
-            <table className="min-w-full divide-y divide-border text-sm">
-              <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-                <tr>
-                  <th className="px-4 py-3 text-left font-medium">Time</th>
-                  <th className="px-4 py-3 text-left font-medium">Action</th>
-                  <th className="px-4 py-3 text-left font-medium">Actor</th>
-                  <th className="px-4 py-3 text-left font-medium">Entity</th>
-                  <th className="px-4 py-3 text-left font-medium">School</th>
-                  <th className="px-4 py-3 text-left font-medium">Metadata</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border bg-card">
-                {logs.map((log) => (
-                  <tr key={log.id}>
-                    <td className="px-4 py-3 text-xs font-mono">{formatDateTime(log.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant={ACTION_BADGE[log.action] ?? "outline"}>
-                        {log.action.replace(/_/g, " ")}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{log.actor.name ?? "Unknown"}</div>
-                      <div className="text-xs text-muted-foreground">{log.actor.email}</div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-sm">{log.entity} #{log.entityId}</td>
-                    <td className="px-4 py-3">
-                      {log.school ? (
-                        <div className="text-sm">{log.school.name}</div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">Platform</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {log.metadata ? (
-                        <pre className="max-h-16 overflow-auto text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded">
-                          {JSON.stringify(log.metadata, null, 2)}
-                        </pre>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </td>
+          <>
+            <div className="rounded-lg border border-border">
+              <table className="min-w-full divide-y divide-border text-sm">
+                <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 text-left font-medium">Time</th>
+                    <th className="px-4 py-3 text-left font-medium">Action</th>
+                    <th className="px-4 py-3 text-left font-medium">Actor</th>
+                    <th className="px-4 py-3 text-left font-medium">Entity</th>
+                    <th className="px-4 py-3 text-left font-medium">School</th>
+                    <th className="px-4 py-3 text-left font-medium">Metadata</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-border bg-card">
+                  {logs.map((log) => (
+                    <tr key={log.id}>
+                      <td className="px-4 py-3 text-xs font-mono">{formatDateTime(log.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={ACTION_BADGE[log.action] ?? "outline"}>
+                          {log.action.replace(/_/g, " ")}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{log.actor.name ?? "Unknown"}</div>
+                        <div className="text-xs text-muted-foreground">{log.actor.email}</div>
+                      </td>
+                      <td className="px-4 py-3 font-mono text-sm">{log.entity} #{log.entityId}</td>
+                      <td className="px-4 py-3">
+                        {log.school ? (
+                          <div className="text-sm">{log.school.name}</div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Platform</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3">
+                        {log.metadata ? (
+                          <pre className="max-h-16 overflow-auto text-xs text-muted-foreground font-mono bg-muted/50 p-2 rounded">
+                            {JSON.stringify(log.metadata, null, 2)}
+                          </pre>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <p>
+                Page {safePage} of {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <a
+                  href={queryString({ page: String(safePage - 1) })}
+                  aria-disabled={safePage <= 1}
+                  className={safePage <= 1
+                    ? "pointer-events-none rounded-md border border-border px-3 py-1.5 opacity-50"
+                    : "rounded-md border border-border px-3 py-1.5 hover:bg-muted"}
+                >
+                  Previous
+                </a>
+                <a
+                  href={queryString({ page: String(safePage + 1) })}
+                  aria-disabled={safePage >= totalPages}
+                  className={safePage >= totalPages
+                    ? "pointer-events-none rounded-md border border-border px-3 py-1.5 opacity-50"
+                    : "rounded-md border border-border px-3 py-1.5 hover:bg-muted"}
+                >
+                  Next
+                </a>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

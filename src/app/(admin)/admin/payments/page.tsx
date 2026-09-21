@@ -11,7 +11,7 @@ import { listSubscriptions } from "@/server/services/school-subscriptions";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
-import { formatDateTime, formatMoney } from "@/lib/format";
+import { formatDateTime, formatMoney, formatMoneyMinor } from "@/lib/format";
 import { ChargeSubscriptionButton, VerifyTransactionButton } from "./admin-payment-actions";
 
 export const metadata: Metadata = {
@@ -69,7 +69,7 @@ export default async function AdminPaymentsPage() {
                   <td className="px-4 py-3">
                     <div className="font-medium">{sub.plan.name}</div>
                     <div className="text-xs text-muted-foreground">
-                      {formatMoney(sub.plan.annualPrice, "USD")}/year
+                      {formatMoneyMinor(sub.plan.annualPrice, "USD")}/year
                     </div>
                   </td>
                   <td className="px-4 py-3">
@@ -82,7 +82,7 @@ export default async function AdminPaymentsPage() {
                     <ChargeSubscriptionButton
                       schoolId={sub.schoolId}
                       schoolName={sub.school.name}
-                      amountLabel={formatMoney(sub.plan.annualPrice, "USD")}
+                      amountLabel={formatMoneyMinor(sub.plan.annualPrice, "USD")}
                     />
                   </td>
                 </tr>

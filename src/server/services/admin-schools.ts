@@ -52,6 +52,90 @@ export async function listSchools(
   });
 }
 
+const SCHOOLS_PAGE_SIZE = 20;
+
+/**
+ * Paginated school list with name/slug/email search and status filter
+ * (platform staff only). Keeps the unfiltered `listSchools` for dropdowns.
+ */
+export async function listSchoolsPage(filter: {
+  search?: string;
+  status?: SchoolStatus | "ALL";
+  page?: number;
+  pageSize?: number;
+}): Promise<{
+  items: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    email: string | null;
+    phone: string | null;
+    currency: string;
+    status: SchoolStatus;
+    createdAt: Date;
+    _count: { memberships: number; students: number };
+  }>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}> {
+  const page = Math.max(1, Math.floor(filter.page ?? 1));
+  const pageSize = Math.min(
+    100,
+    Math.max(1, Math.floor(filter.pageSize ?? SCHOOLS_PAGE_SIZE))
+  );
+  const search = filter.search?.trim();
+  const status =
+    filter.status && filter.status !== "ALL" ? filter.status : undefined;
+
+  const where = {
+    ...(status ? { status } : {}),
+    ...(search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { slug: { contains: search, mode: "insensitive" as const } },
+            { email: { contains: search, mode: "insensitive" as const } },
+          ],
+        }
+      : {}),
+  };
+
+  const select = {
+    id: true,
+    name: true,
+    slug: true,
+    email: true,
+    phone: true,
+    currency: true,
+    status: true,
+    createdAt: true,
+    _count: {
+      select: { memberships: true, students: true },
+    },
+  } as const;
+
+  const [total, items] = await Promise.all([
+    db.school.count({ where }),
+    db.school.findMany({
+      where,
+      select,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+    }),
+  ]);
+
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  };
+}
+
 /** Get a single school by ID with full details (platform staff only). */
 export async function getSchoolById(id: string): Promise<{
   id: string;
@@ -83,6 +167,8 @@ export async function getSchoolById(id: string): Promise<{
     gracePeriodEnd: Date | null;
     cancelledAt: Date | null;
     paymentRef: string | null;
+    provider: string | null;
+    providerReference: string | null;
     notes: string | null;
     plan: { id: string; name: string; studentLimit: number | null; staffLimit: number | null };
   }>;
@@ -97,7 +183,9 @@ export async function getSchoolById(id: string): Promise<{
         },
       },
       subscriptions: {
-        include: { plan: { select: { id: true, name: true, studentLimit: true, staffLimit: true } } },
+        include: {
+          plan: { select: { id: true, name: true, studentLimit: true, staffLimit: true } },
+        },
       },
       _count: {
         select: { memberships: true, students: true, subscriptions: true },

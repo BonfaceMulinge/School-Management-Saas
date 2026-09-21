@@ -56,3 +56,15 @@ export function formatMoney(
     }).format(value);
   }
 }
+
+/**
+ * SubscriptionPlan money is stored in minor units (e.g. USD cents), so a
+ * $300 plan is stored as 30000. Format the minor-unit value as major units.
+ */
+export function formatMoneyMinor(
+  amountMinor: number | null | undefined,
+  currency: string
+): string {
+  if (amountMinor === null || amountMinor === undefined) return "—";
+  return formatMoney(amountMinor / 100, currency);
+}

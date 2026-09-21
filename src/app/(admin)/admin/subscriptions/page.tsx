@@ -96,36 +96,40 @@ function SubscriptionActions({
     status: string;
   };
 }) {
+  async function suspendSubscription(id: string) {
+    "use server";
+    await setSubscriptionStatusAction(id, "SUSPENDED");
+  }
+  async function activateSubscriptionAgain(id: string) {
+    "use server";
+    await setSubscriptionStatusAction(id, "ACTIVE");
+  }
+  async function cancelWithGrace(id: string) {
+    "use server";
+    await cancelSubscriptionAction(id, { immediate: false, gracePeriodDays: 30 });
+  }
+
   const isActive = ["ACTIVE", "TRIAL", "GRACE_PERIOD"].includes(subscription.status);
   const canCancel = !["CANCELLED", "EXPIRED"].includes(subscription.status);
 
   return (
     <div className="flex items-center justify-end gap-2">
       {isActive && (
-        <form action={async () => {
-          const res = await setSubscriptionStatusAction(subscription.id, "SUSPENDED");
-          if (!res.ok) return;
-        }}>
+        <form action={suspendSubscription.bind(null, subscription.id)}>
           <button type="submit" className="text-sm text-destructive hover:underline">
             Suspend
           </button>
         </form>
       )}
       {!isActive && subscription.status !== "CANCELLED" && subscription.status !== "EXPIRED" && (
-        <form action={async () => {
-          const res = await setSubscriptionStatusAction(subscription.id, "ACTIVE");
-          if (!res.ok) return;
-        }}>
+        <form action={activateSubscriptionAgain.bind(null, subscription.id)}>
           <button type="submit" className="text-sm text-primary hover:underline">
             Activate
           </button>
         </form>
       )}
       {canCancel && (
-        <form action={async () => {
-          const res = await cancelSubscriptionAction(subscription.id, { immediate: false, gracePeriodDays: 30 });
-          if (!res.ok) return;
-        }}>
+        <form action={cancelWithGrace.bind(null, subscription.id)}>
           <button type="submit" className="text-sm text-destructive hover:underline">
             Cancel (30-day grace)
           </button>
