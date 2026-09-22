@@ -1,248 +1,86 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 
 import { requireSuperAdmin } from "@/server/platform-auth";
 import { getSchoolById } from "@/server/services/admin-schools";
-import { listSubscriptionEvents } from "@/server/services/school-subscriptions";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
-import { formatDate, formatDateTime } from "@/lib/format";
-import { EditSchoolDialog } from "./edit-school-dialog";
-import { StatusAction } from "./status-action";
-import { ArchiveAction } from "./archive-action";
-import { ProvisionAdminDialog } from "./provision-admin-dialog";
+import { Button } from "@/components/ui/button";
+import { formatDate } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "School Details",
+};
+
+const STATUS_META: Record<
+  string,
+  { label: string; badge: "default" | "secondary" | "destructive" | "outline" }
+> = {
+  ACTIVE: { label: "Active", badge: "default" },
+  SUSPENDED: { label: "Suspended", badge: "destructive" },
+  ARCHIVED: { label: "Archived", badge: "outline" },
 };
 
 interface Props {
   params: Promise<{ id: string }>;
 }
 
-export default async function AdminSchoolDetailPage({ params }: Props) {
-  await requireSuperAdmin({ next: "/admin/schools" });
+export default async function AdminSchoolViewPage({ params }: Props) {
+  await requireSuperAdmin({ next: "/admin" });
   const { id } = await params;
 
-  const [school, subscriptionEvents] = await Promise.all([
-    getSchoolById(id),
-    listSubscriptionEvents(id),
-  ]);
+  const school = await getSchoolById(id);
   if (!school) notFound();
 
-  const statusBadge: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-    ACTIVE: "default",
-    SUSPENDED: "destructive",
-    ARCHIVED: "outline",
-  };
+  const administrator =
+    school.memberships.find((m) => m.role === "SCHOOL_ADMIN")?.user ?? null;
+  const meta = STATUS_META[school.status] ?? { label: school.status, badge: "outline" as const };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <div>
+        <Link href="/admin">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="mr-2 size-4" aria-hidden="true" />
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
+
       <PageHeader
         title={school.name}
         description={school.slug}
-        action={
-          <>
-            <EditSchoolDialog school={school} />
-            <StatusAction school={school} />
-            {school.status !== "ARCHIVED" && <ArchiveAction school={school} />}
-          </>
-        }
+        action={<Badge variant={meta.badge}>{meta.label}</Badge>}
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <section className="lg:col-span-2 space-y-6">
-          <div className="rounded-lg border border-border bg-card p-5">
-            <h3 className="text-sm font-semibold mb-4">Overview</h3>
-            <dl className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs text-muted-foreground">Slug</dt>
-                <dd className="font-mono text-sm">{school.slug}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Status</dt>
-                <dd>
-                  <Badge variant={statusBadge[school.status] ?? "outline"}>
-                    {school.status}
-                  </Badge>
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Currency</dt>
-                <dd className="font-mono text-sm">{school.currency}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Timezone</dt>
-                <dd className="font-mono text-sm">{school.timezone}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-xs text-muted-foreground">Email</dt>
-                <dd className="text-sm">{school.email ?? "—"}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-xs text-muted-foreground">Phone</dt>
-                <dd className="text-sm">{school.phone ?? "—"}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-xs text-muted-foreground">Address</dt>
-                <dd className="text-sm">{school.address ?? "—"}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-xs text-muted-foreground">Motto</dt>
-                <dd className="text-sm">{school.motto ?? "—"}</dd>
-              </div>
-              <div className="sm:col-span-2">
-                <dt className="text-xs text-muted-foreground">Website</dt>
-                <dd className="text-sm">{school.website ?? "—"}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Created</dt>
-                <dd className="text-sm">{formatDate(school.createdAt)}</dd>
-              </div>
-              <div>
-                <dt className="text-xs text-muted-foreground">Updated</dt>
-                <dd className="text-sm">{formatDate(school.updatedAt)}</dd>
-              </div>
-            </dl>
+      <div className="rounded-lg border border-border bg-card p-6">
+        <h2 className="mb-4 text-sm font-semibold">School details</h2>
+        <dl className="space-y-4">
+          <div>
+            <dt className="text-xs text-muted-foreground">Status</dt>
+            <dd className="mt-0.5 text-sm">
+              <Badge variant={meta.badge}>{meta.label}</Badge>
+            </dd>
           </div>
-
-          {school.subscriptions.length > 0 && (
-            <div className="rounded-lg border border-border bg-card p-5">
-              <h3 className="text-sm font-semibold mb-4">Subscription</h3>
-              <div className="space-y-3">
-                {school.subscriptions.map((sub) => (
-                  <div key={sub.id} className="rounded-lg border border-border p-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{sub.plan.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {sub.status} · {sub.endDate ? `Ends ${formatDate(sub.endDate)}` : "No end date"}
-                          {sub.gracePeriodEnd && ` · Grace until ${formatDate(sub.gracePeriodEnd)}`}
-                        </p>
-                        {(sub.paymentRef || sub.providerReference) && (
-                          <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                            {sub.paymentRef ?? sub.providerReference}
-                          </p>
-                        )}
-                      </div>
-                      <Badge variant={
-                        sub.status === "ACTIVE" || sub.status === "TRIAL" ? "default" :
-                        sub.status === "GRACE_PERIOD" ? "secondary" : "destructive"
-                      }>
-                        {sub.status}
-                      </Badge>
-                    </div>
-                    {sub.notes && <p className="text-sm text-muted-foreground">{sub.notes}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {subscriptionEvents.length > 0 && (
-            <div className="rounded-lg border border-border bg-card p-5">
-              <h3 className="text-sm font-semibold mb-4">Subscription history</h3>
-              <div className="overflow-x-auto rounded border border-border">
-                <table className="min-w-full divide-y divide-border text-sm">
-                  <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
-                    <tr>
-                      <th className="px-4 py-2 text-left font-medium">Time</th>
-                      <th className="px-4 py-2 text-left font-medium">Event</th>
-                      <th className="px-4 py-2 text-left font-medium">Status</th>
-                      <th className="px-4 py-2 text-left font-medium">Plan</th>
-                      <th className="px-4 py-2 text-left font-medium">Reason</th>
-                      <th className="px-4 py-2 text-left font-medium">Actor</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border bg-card">
-                    {subscriptionEvents.map((ev) => (
-                      <tr key={ev.id}>
-                        <td className="px-4 py-2 text-xs font-mono text-muted-foreground whitespace-nowrap">
-                          {formatDateTime(ev.createdAt)}
-                        </td>
-                        <td className="px-4 py-2">
-                          <Badge variant={
-                            ev.type === "CREATED" || ev.type === "RENEWED" ? "default" : "secondary"
-                          }>
-                            {ev.type.replace(/_/g, " ")}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2 text-xs whitespace-nowrap">
-                          {ev.fromStatus ?? "—"} → {ev.toStatus}
-                        </td>
-                        <td className="px-4 py-2 text-xs">{ev.planName}</td>
-                        <td className="px-4 py-2 text-xs text-muted-foreground">{ev.reason ?? "—"}</td>
-                        <td className="px-4 py-2 text-xs">{ev.actorName ?? "Unknown"}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          <div className="rounded-lg border border-border bg-card p-5">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Administrators</h3>
-              {school.status !== "ARCHIVED" ? (
-                <ProvisionAdminDialog
-                  schoolId={school.id}
-                  schoolName={school.name}
-                />
-              ) : null}
-            </div>
-            {school.memberships.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No administrators assigned</p>
-            ) : (
-              <div className="space-y-2">
-                {school.memberships.map((m) => (
-                  <div key={m.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex size-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                        {m.user.name?.[0]?.toUpperCase() ?? "?"}
-                      </div>
-                      <div>
-                        <p className="font-medium">{m.user.name ?? "Unnamed"}</p>
-                        <p className="text-xs text-muted-foreground">{m.user.email}</p>
-                      </div>
-                    </div>
-                    <Badge variant="outline">{m.role}</Badge>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div>
+            <dt className="text-xs text-muted-foreground">Administrator</dt>
+            <dd className="mt-0.5 text-sm">{administrator?.name ?? "—"}</dd>
           </div>
-        </section>
-
-        <aside className="space-y-6">
-          <div className="rounded-lg border border-border bg-card p-5">
-            <h3 className="text-sm font-semibold mb-4">Statistics</h3>
-            <dl className="space-y-3">
-              <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">Members</dt>
-                <dd className="font-medium">{school._count.memberships}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">Students</dt>
-                <dd className="font-medium">{school._count.students}</dd>
-              </div>
-              <div className="flex justify-between">
-                <dt className="text-sm text-muted-foreground">Subscriptions</dt>
-                <dd className="font-medium">{school._count.subscriptions}</dd>
-              </div>
-            </dl>
+          <div>
+            <dt className="text-xs text-muted-foreground">Admin email</dt>
+            <dd className="mt-0.5 text-sm">{administrator?.email ?? "—"}</dd>
           </div>
-
-          {school.status !== "ARCHIVED" && (
-            <div className="rounded-lg border border-border bg-card p-5">
-              <h3 className="text-sm font-semibold mb-3">Actions</h3>
-              <div className="space-y-2">
-                <StatusAction school={school} />
-                <ArchiveAction school={school} />
-              </div>
-            </div>
-          )}
-        </aside>
+          <div>
+            <dt className="text-xs text-muted-foreground">Created on</dt>
+            <dd className="mt-0.5 text-sm">{formatDate(school.createdAt)}</dd>
+          </div>
+          <div>
+            <dt className="text-xs text-muted-foreground">Slug</dt>
+            <dd className="mt-0.5 font-mono text-sm">{school.slug}</dd>
+          </div>
+        </dl>
       </div>
     </div>
   );

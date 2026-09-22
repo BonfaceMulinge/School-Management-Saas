@@ -2,14 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   LayoutDashboard,
-  School,
-  CreditCard,
-  Package,
-  Users,
-  FileText,
   Settings,
-  Plug,
-  Banknote,
   LogOut,
 } from "lucide-react";
 
@@ -33,13 +26,6 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
 const nav = [
   { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { title: "Schools", href: "/admin/schools", icon: School },
-  { title: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
-  { title: "Payments", href: "/admin/payments", icon: Banknote },
-  { title: "Integrations", href: "/admin/integrations", icon: Plug },
-  { title: "Plans", href: "/admin/plans", icon: Package },
-  { title: "Users", href: "/admin/users", icon: Users },
-  { title: "Audit Log", href: "/admin/audit", icon: FileText },
 ];
 
 function AdminSidebar() {

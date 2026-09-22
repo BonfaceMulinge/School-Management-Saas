@@ -74,6 +74,7 @@ export async function listSchoolsPage(filter: {
     status: SchoolStatus;
     createdAt: Date;
     _count: { memberships: number; students: number };
+    administrator: { name: string | null; email: string } | null;
   }>;
   total: number;
   page: number;
@@ -89,17 +90,38 @@ export async function listSchoolsPage(filter: {
   const status =
     filter.status && filter.status !== "ALL" ? filter.status : undefined;
 
+  // Search matches school fields and the school's administrators.
   const where = {
-    ...(status ? { status } : {}),
-    ...(search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" as const } },
-            { slug: { contains: search, mode: "insensitive" as const } },
-            { email: { contains: search, mode: "insensitive" as const } },
-          ],
-        }
-      : {}),
+    AND: [
+      ...(status ? [{ status }] : []),
+      ...(search
+        ? [
+            {
+              OR: [
+                { name: { contains: search, mode: "insensitive" as const } },
+                { slug: { contains: search, mode: "insensitive" as const } },
+                { email: { contains: search, mode: "insensitive" as const } },
+                {
+                  memberships: {
+                    some: {
+                      role: "SCHOOL_ADMIN" as const,
+                      user: { name: { contains: search, mode: "insensitive" as const } },
+                    },
+                  },
+                },
+                {
+                  memberships: {
+                    some: {
+                      role: "SCHOOL_ADMIN" as const,
+                      user: { email: { contains: search, mode: "insensitive" as const } },
+                    },
+                  },
+                },
+              ],
+            },
+          ]
+        : []),
+    ],
   };
 
   const select = {
@@ -114,6 +136,11 @@ export async function listSchoolsPage(filter: {
     _count: {
       select: { memberships: true, students: true },
     },
+    memberships: {
+      where: { role: "SCHOOL_ADMIN" as const },
+      take: 1,
+      select: { user: { select: { name: true, email: true } } },
+    },
   } as const;
 
   const [total, items] = await Promise.all([
@@ -127,8 +154,13 @@ export async function listSchoolsPage(filter: {
     }),
   ]);
 
+  const rows = items.map(({ memberships, ...school }) => ({
+    ...school,
+    administrator: memberships[0]?.user ?? null,
+  }));
+
   return {
-    items,
+    items: rows,
     total,
     page,
     pageSize,

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 import { setSchoolStatusAction } from "@/server/actions/admin";
 
@@ -18,7 +19,6 @@ export function StatusAction({ school }: { school: School }) {
   const [pending, setPending] = useState(false);
   const newStatus = school.status === "ACTIVE" ? "SUSPENDED" : "ACTIVE";
   const label = newStatus === "SUSPENDED" ? "Suspend" : "Activate";
-  const variant = newStatus === "SUSPENDED" ? "destructive" : "default";
 
   const handleClick = async () => {
     setPending(true);
@@ -36,9 +36,23 @@ export function StatusAction({ school }: { school: School }) {
     }
   };
 
+  if (newStatus === "SUSPENDED") {
+    return (
+      <ConfirmDialog
+        trigger={<Button variant="destructive" size="sm" disabled={pending}>Suspend</Button>}
+        title="Suspend school"
+        description="Are you sure you want to suspend this school? No data will be deleted, and you can activate the school again at any time."
+        confirmLabel="Suspend"
+        destructive
+        onConfirm={handleClick}
+        busy={pending}
+      />
+    );
+  }
+
   return (
     <Button
-      variant={variant}
+      variant="default"
       size="sm"
       onClick={handleClick}
       disabled={pending}
