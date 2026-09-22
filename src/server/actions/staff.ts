@@ -11,7 +11,7 @@ import { createAuditLog } from "@/server/services/audit-log";
 import { assertUsageCapacityTx, UsageLimitError } from "@/server/services/subscription-enforcement";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { fullName } from "@/lib/students";
-import { Prisma, type Role, type StaffRole, type StaffStatus } from "@/generated/prisma/client";
+import { Prisma, type StaffRole, type StaffStatus } from "@/generated/prisma/client";
 
 const roleEnum = z.enum(["TEACHER", "SCHOOL_ADMIN", "ACCOUNTANT", "SUPPORT_STAFF", "OTHER"]);
 const statusEnum = z.enum(["ACTIVE", "INACTIVE"]);
@@ -80,7 +80,15 @@ async function upsertMembership(
   userId: string,
   staffRole: StaffRole
 ) {
-  const role: Role = mappedMembershipRole(staffRole);
+  const role = mappedMembershipRole(staffRole);
+  if (role === null) {
+    // Non-teaching/non-admin employment records get no portal login; revoke
+    // any staff-derived membership so the user cannot keep a stale dashboard.
+    await client.membership.deleteMany({
+      where: { schoolId, userId, role: { in: ["TEACHER", "SCHOOL_ADMIN"] } },
+    });
+    return;
+  }
   await client.membership.upsert({
     where: { schoolId_userId: { schoolId, userId } },
     update: { role },
@@ -142,6 +150,12 @@ export async function createStaff(
     return fail("Check the highlighted fields.", parsed.error.flatten().fieldErrors);
   }
   const data = parsed.data as StaffInput;
+
+  if (wantAccount && mappedMembershipRole(data.role) === null) {
+    return fail(
+      "Login accounts are only available for Teachers and School Administrators."
+    );
+  }
 
   let userId: string | null = null;
   if (wantAccount) {
@@ -247,6 +261,12 @@ export async function updateStaff(
     return fail("Check the highlighted fields.", parsed.error.flatten().fieldErrors);
   }
   const data = parsed.data as StaffInput;
+
+  if (wantAccount && mappedMembershipRole(data.role) === null) {
+    return fail(
+      "Login accounts are only available for Teachers and School Administrators."
+    );
+  }
 
   let userId = existing.userId;
   if (wantAccount) {
@@ -358,7 +378,8 @@ export async function archiveStaff(
     // Archived staff are no longer active users: revoke the membership that
     // matched their employment role so they cannot keep signing in with a
     // staff role. Unrelated memberships (e.g. PARENT) are left untouched.
-    if (existing.userId) {
+    // Non-teaching/non-admin staff never had a membership to revoke.
+    if (existing.userId && mappedRole !== null) {
       await tx.membership.deleteMany({
         where: {
           schoolId: access.schoolId,

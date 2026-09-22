@@ -9,20 +9,21 @@ import type { Prisma, Role, StaffRole } from "@/generated/prisma/client";
 const NONE_WHERE = { id: { equals: "__none__" } };
 
 /**
- * Translate a viewer's school access into the Portal Role granted to a staff
- * member's Membership. Teachers and school administrators use their namesake
- * roles; every other employment category gets the generic `STAFF` role with
- * minimal permissions. This is what keeps non-teaching staff from inheriting
- * teacher/school-admin privileges.
+ * Translate a staff member's employment role into the Portal Role granted to
+ * their Membership. Teachers and school administrators use their namesake
+ * roles; every other employment category gets no portal login at all (null).
+ * This is what keeps non-teaching staff from inheriting teacher/school-admin
+ * privileges — the product ships exactly four dashboards (SUPER ADMIN, SCHOOL
+ * ADMIN, TEACHER, PARENT/STUDENT).
  */
-export function mappedMembershipRole(staffRole: StaffRole): Role {
+export function mappedMembershipRole(staffRole: StaffRole): Role | null {
   switch (staffRole) {
     case "TEACHER":
       return "TEACHER";
     case "SCHOOL_ADMIN":
       return "SCHOOL_ADMIN";
     default:
-      return "STAFF";
+      return null;
   }
 }
 
@@ -32,11 +33,10 @@ export function mappedMembershipRole(staffRole: StaffRole): Role {
  *
  * - SCHOOL_ADMIN / platform staff (SUPER_ADMIN, SUPPORT): all staff.
  * - TEACHER: only their own staff profile.
- * - STAFF: only their own staff profile.
  * - PARENT / STUDENT: no staff records.
  *
  * Every staff query in this module MUST be combined with this scope so that
- * teachers/staff/parents/students can never see each other's records.
+ * teachers/parents/students can never see each other's records.
  */
 export async function staffScopeWhere(
   access: SchoolAccess
@@ -47,10 +47,7 @@ export async function staffScopeWhere(
     return {};
   }
 
-  if (
-    membership?.role === "TEACHER" ||
-    membership?.role === "STAFF"
-  ) {
+  if (membership?.role === "TEACHER") {
     return { userId: user.id };
   }
 

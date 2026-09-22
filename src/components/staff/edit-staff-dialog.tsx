@@ -81,8 +81,8 @@ export function EditStaffDialog({
               defaultOn: staff.userId !== null,
               emailDefault: staff.userEmail ?? "",
               hint: staff.userId
-                ? "Edit the email to relink this staff member to an account."
-                : "Provide an email to link this staff member to an account.",
+                ? "Only Teachers and School Administrators can hold portal logins."
+                : "Provide an email to link a Teacher or School Administrator to an account.",
             }}
           />
           {failure?.error && !failure.fieldErrors ? (

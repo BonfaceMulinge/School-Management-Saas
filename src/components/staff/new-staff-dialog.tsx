@@ -54,7 +54,7 @@ export function NewStaffDialog({ slug }: { slug: string }) {
               toggleLabel: "Create login account",
               defaultOn: false,
               emailDefault: "",
-              hint: "Reuses an existing account with this email; joins the school with the matching staff role.",
+              hint: "Only Teachers and School Administrators get portal logins. Reuses an existing account with this email.",
             }}
           />
           {failure?.error && !failure.fieldErrors ? (

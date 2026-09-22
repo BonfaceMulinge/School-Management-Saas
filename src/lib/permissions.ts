@@ -36,9 +36,6 @@ export const PERMISSIONS = {
   parents_manage: "parents:manage",
   staff_view: "staff:view",
   staff_manage: "staff:manage",
-  attendance_view: "attendance:view",
-  attendance_manage: "attendance:manage",
-  attendance_report: "attendance:report",
   exams_view: "exams:view",
   exams_manage: "exams:manage",
   grading_view: "grading:view",
@@ -74,8 +71,7 @@ export type SchoolRole =
   | "SCHOOL_ADMIN"
   | "TEACHER"
   | "STUDENT"
-  | "PARENT"
-  | "STAFF";
+  | "PARENT";
 
 export type PlatformRole = "SUPER_ADMIN" | "SUPPORT";
 
@@ -110,9 +106,6 @@ export const ROLE_PERMISSIONS: Record<SchoolRole, readonly Permission[]> = {
     PERMISSIONS.parents_manage,
     PERMISSIONS.staff_view,
     PERMISSIONS.staff_manage,
-    PERMISSIONS.attendance_view,
-    PERMISSIONS.attendance_manage,
-    PERMISSIONS.attendance_report,
     PERMISSIONS.exams_view,
     PERMISSIONS.exams_manage,
     PERMISSIONS.grading_view,
@@ -139,8 +132,6 @@ export const ROLE_PERMISSIONS: Record<SchoolRole, readonly Permission[]> = {
     PERMISSIONS.assignments_view,
     PERMISSIONS.students_view,
     PERMISSIONS.staff_view,
-    PERMISSIONS.attendance_view,
-    PERMISSIONS.attendance_manage,
     PERMISSIONS.exams_view,
     PERMISSIONS.exams_manage,
     PERMISSIONS.results_view,
@@ -153,7 +144,6 @@ export const ROLE_PERMISSIONS: Record<SchoolRole, readonly Permission[]> = {
   STUDENT: [
     PERMISSIONS.dashboard_view,
     PERMISSIONS.students_view,
-    PERMISSIONS.attendance_view,
     PERMISSIONS.results_view,
     PERMISSIONS.finance_view,
     PERMISSIONS.communication_view,
@@ -161,16 +151,10 @@ export const ROLE_PERMISSIONS: Record<SchoolRole, readonly Permission[]> = {
   PARENT: [
     PERMISSIONS.dashboard_view,
     PERMISSIONS.students_view,
-    PERMISSIONS.attendance_view,
     PERMISSIONS.results_view,
     PERMISSIONS.finance_view,
     PERMISSIONS.communication_view,
     PERMISSIONS.documents_view,
-  ],
-  STAFF: [
-    PERMISSIONS.dashboard_view,
-    PERMISSIONS.settings_view,
-    PERMISSIONS.staff_view,
   ],
 };
 
@@ -197,8 +181,6 @@ export const PLATFORM_ROLE_PERMISSIONS: Record<
     PERMISSIONS.students_view,
     PERMISSIONS.parents_view,
     PERMISSIONS.staff_view,
-    PERMISSIONS.attendance_view,
-    PERMISSIONS.attendance_report,
     PERMISSIONS.exams_view,
     PERMISSIONS.grading_view,
     PERMISSIONS.results_view,

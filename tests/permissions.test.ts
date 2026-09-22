@@ -34,8 +34,7 @@ describe("hasSchoolRolePermission", () => {
     }
   });
 
-  it("TEACHER can manage attendance but not finance or settings", () => {
-    expect(hasSchoolRolePermission("TEACHER", PERMISSIONS.attendance_manage)).toBe(true);
+  it("TEACHER cannot manage finance or settings", () => {
     expect(hasSchoolRolePermission("TEACHER", PERMISSIONS.finance_manage)).toBe(false);
     expect(hasSchoolRolePermission("TEACHER", PERMISSIONS.settings_manage)).toBe(false);
   });
@@ -52,11 +51,14 @@ describe("hasSchoolRolePermission", () => {
     expect(hasSchoolRolePermission("PARENT", PERMISSIONS.communication_send)).toBe(false);
   });
 
-  it("STAFF has minimal access", () => {
-    expect(hasSchoolRolePermission("STAFF", PERMISSIONS.dashboard_view)).toBe(true);
-    expect(hasSchoolRolePermission("STAFF", PERMISSIONS.settings_view)).toBe(true);
-    expect(hasSchoolRolePermission("STAFF", PERMISSIONS.students_view)).toBe(false);
-    expect(hasSchoolRolePermission("STAFF", PERMISSIONS.finance_view)).toBe(false);
+  it("the product ships exactly four school dashboards", () => {
+    expect(Object.keys(ROLE_PERMISSIONS)).toEqual([
+      "SCHOOL_ADMIN",
+      "TEACHER",
+      "STUDENT",
+      "PARENT",
+    ]);
+    expect("STAFF" in ROLE_PERMISSIONS).toBe(false);
   });
 });
 

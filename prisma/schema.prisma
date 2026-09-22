@@ -1527,7 +1527,6 @@ enum Role {
   TEACHER
   STUDENT
   PARENT
-  STAFF // generic non-teaching staff membership (accountant, support, other)
 }
 
 /// Platform-level role of a user across all schools.

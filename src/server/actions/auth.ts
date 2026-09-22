@@ -37,6 +37,10 @@ async function resolvePostLoginTarget(params: {
   }
 
   const firstSchool = memberships[0]?.school.slug;
+
+  // Role-based landing: SUPER_ADMIN → platform dashboard, school members →
+  // their first school dashboard.
+  if (platformRole === "SUPER_ADMIN") return "/admin";
   if (firstSchool) return `/${firstSchool}`;
 
   if (platformRole) return "/";
