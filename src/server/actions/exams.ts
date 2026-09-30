@@ -128,6 +128,114 @@ function revalidateExamPaths(slug: string, examId?: string) {
   revalidatePath(`/${slug}/exams/${examId ?? ""}`);
   revalidatePath(`/${slug}/results`);
   revalidatePath(`/${slug}/results/reports`);
+  revalidatePath(`/${slug}/results/report-cards`);
+}
+
+/**
+ * Results review gate: an admin verifies that every subject of the exam has a
+ * mark for every student on the register, then releases the report cards by
+ * moving the exam to COMPLETED.
+ */
+export async function verifyExamResults(
+  schoolSlug: string,
+  examId: string
+): Promise<ActionResult> {
+  const access = await assertPermission(schoolSlug, "results:manage");
+
+  const exam = await db.exam.findUnique({
+    where: { id: examId, schoolId: access.schoolId },
+    select: {
+      id: true,
+      status: true,
+      classId: true,
+      streamId: true,
+      academicYearId: true,
+      termId: true,
+      subjects: {
+        select: {
+          subjectId: true,
+          subject: { select: { name: true } },
+          _count: { select: { marks: true } },
+        },
+      },
+    },
+  });
+  if (!exam) return fail("Exam not found.");
+  if (exam.status === "ARCHIVED") {
+    return fail("Archived exams cannot have their results verified.");
+  }
+  if (exam.subjects.length === 0) return fail("This exam has no subject papers yet.");
+
+  const roster = await db.enrollment.findMany({
+    where: {
+      schoolId: access.schoolId,
+      classId: exam.classId,
+      academicYearId: exam.academicYearId,
+      termId: exam.termId,
+      status: "ACTIVE",
+      ...(exam.streamId ? { streamId: exam.streamId } : {}),
+      student: { archived: false },
+    },
+    select: { id: true, studentId: true },
+  });
+  if (roster.length === 0) {
+    return fail("No students are enrolled for this class/stream, so there is nothing to verify.");
+  }
+
+  const marked = await db.examMark.findMany({
+    where: { schoolId: access.schoolId, examId: exam.id },
+    select: { subjectId: true, studentId: true },
+  });
+  const pairs = new Set(marked.map((m) => `${m.subjectId}:${m.studentId}`));
+  const studentIds = roster.map((r) => r.studentId);
+
+  const incomplete = exam.subjects
+    .filter((s) =>
+      studentIds.some((studentId) => !pairs.has(`${s.subjectId}:${studentId}`))
+    )
+    .map((s) => s.subject.name);
+
+  if (incomplete.length > 0) {
+    return fail(
+      `Marks are still missing for ${incomplete.join(", ")}. Record every mark before verifying these results.`
+    );
+  }
+
+  await db.exam.update({
+    where: { id: exam.id },
+    data: { status: "COMPLETED", updatedById: access.user.id },
+  });
+
+  revalidateExamPaths(schoolSlug, exam.id);
+  return ok();
+}
+
+/** Send results back for correction (COMPLETED → ONGOING). */
+export async function reopenExamResults(
+  schoolSlug: string,
+  examId: string
+): Promise<ActionResult> {
+  const access = await assertPermission(schoolSlug, "results:manage");
+
+  const exam = await db.exam.findUnique({
+    where: { id: examId, schoolId: access.schoolId },
+    select: { id: true, status: true },
+  });
+  if (!exam) return fail("Exam not found.");
+  if (exam.status === "ARCHIVED") {
+    return fail("Archived exams cannot be reopened.");
+  }
+  if (exam.status !== "COMPLETED") {
+    return fail("Only verified results can be sent back for correction.");
+  }
+
+  await db.exam.update({
+    where: { id: exam.id },
+    data: { status: "ONGOING", updatedById: access.user.id },
+  });
+
+  revalidateExamPaths(schoolSlug, exam.id);
+  return ok();
 }
 
 export async function createExam(
@@ -400,7 +508,9 @@ export async function saveMarks(
   const rosterById = new Map(roster.map((r) => [r.student.id, r]));
 
   const rawMarks = indexedEntries(input, "mark");
-  if (rawMarks.size === 0) return fail("No marks were submitted.");
+  if (rawMarks.size === 0 && indexedEntries(input, "remark").size === 0) {
+    return fail("No marks were submitted.");
+  }
 
   const values = new Map<string, Prisma.Decimal>();
   for (const [studentId, raw] of rawMarks) {
@@ -418,13 +528,32 @@ export async function saveMarks(
     }
     values.set(studentId, value);
   }
-  if (values.size === 0) return fail("No marks were submitted.");
+
+  // Remarks are optional per-subject comments shown on the report card.
+  const remarks = new Map<string, string | null>();
+  for (const [studentId, raw] of indexedEntries(input, "remark")) {
+    if (!rosterById.has(studentId)) {
+      return fail("One or more students are not part of this exam's register.");
+    }
+    const trimmed = raw.trim();
+    if (trimmed.length > 500) {
+      return fail("Remarks must be 500 characters or fewer.");
+    }
+    remarks.set(studentId, trimmed ? trimmed : null);
+  }
+  if (values.size === 0 && remarks.size === 0) return fail("No marks were submitted.");
 
   const existing = await db.examMark.findMany({
     where: { schoolId: access.schoolId, examId, examSubjectId },
-    select: { id: true, studentId: true, marksObtained: true },
+    select: { id: true, studentId: true, marksObtained: true, remark: true },
   });
   const existingByStudent = new Map(existing.map((m) => [m.studentId, m]));
+
+  for (const studentId of remarks.keys()) {
+    if (!values.has(studentId) && !existingByStudent.has(studentId)) {
+      return fail("Record a mark before adding a remark for a student.");
+    }
+  }
 
   let saved = 0;
   let updated = 0;
@@ -442,16 +571,34 @@ export async function saveMarks(
             studentId,
             enrollmentId: rosterById.get(studentId)?.id ?? null,
             marksObtained: value,
+            remark: remarks.get(studentId) ?? null,
             recordedById: access.user.id,
           },
         });
         saved += 1;
-      } else if (!current.marksObtained.equals(value)) {
+      } else {
+        const remarkChanged = remarks.has(studentId) && remarks.get(studentId) !== current.remark;
+        if (!current.marksObtained.equals(value) || remarkChanged) {
+          await tx.examMark.update({
+            where: { id: current.id },
+            data: {
+              ...(current.marksObtained.equals(value) ? {} : { marksObtained: value }),
+              ...(remarkChanged ? { remark: remarks.get(studentId) ?? null } : {}),
+              updatedById: access.user.id,
+            },
+          });
+          updated += 1;
+        }
+      }
+    }
+    for (const [studentId, remark] of remarks) {
+      if (values.has(studentId)) continue;
+      const current = existingByStudent.get(studentId);
+      if (current && remark !== current.remark) {
         await tx.examMark.update({
           where: { id: current.id },
-          data: { marksObtained: value, updatedById: access.user.id },
+          data: { remark: remark ?? null, updatedById: access.user.id },
         });
-        updated += 1;
       }
     }
   });

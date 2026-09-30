@@ -295,12 +295,23 @@ async function ClassPerformance({
       examId: exam.id,
       ...(scoped ? { studentId: { in: scoped } } : {}),
     },
-    select: { subjectId: true, studentId: true, marksObtained: true },
+    select: {
+      subjectId: true,
+      studentId: true,
+      marksObtained: true,
+      remark: true,
+    },
   });
-  const marksByStudent = new Map<string, Map<string, number>>();
+  const marksByStudent = new Map<
+    string,
+    Map<string, { marksObtained: number; remark: string | null }>
+  >();
   for (const m of marks) {
-    const inner = marksByStudent.get(m.studentId) ?? new Map<string, number>();
-    inner.set(m.subjectId, m.marksObtained.toNumber());
+    const inner = marksByStudent.get(m.studentId) ?? new Map();
+    inner.set(m.subjectId, {
+      marksObtained: m.marksObtained.toNumber(),
+      remark: m.remark,
+    });
     marksByStudent.set(m.studentId, inner);
   }
 

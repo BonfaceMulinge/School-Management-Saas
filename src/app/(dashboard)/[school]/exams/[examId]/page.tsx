@@ -24,6 +24,7 @@ import { formatDate } from "@/lib/format";
 import { fullName } from "@/lib/students";
 import { MarksForm, type MarksRowView } from "./marks-form";
 import { PapersSection } from "./papers-section";
+import { VerifyResultsButton } from "./verify-results";
 
 export const metadata: Metadata = {
   title: "Exam results",
@@ -61,6 +62,7 @@ export default async function ExamDetailPage(
     requirePermission(slug, "exams:view", { next: `/${slug}` }),
     canAccess(slug, "exams:manage"),
   ]);
+  const canVerifyResults = await canAccess(slug, "results:manage");
 
   // Students and parents see only their own results — on the results page.
   if (
@@ -112,12 +114,18 @@ export default async function ExamDetailPage(
   // All marks for this exam (drives the whole-exam summary).
   const allMarks = await db.examMark.findMany({
     where: { schoolId: access.schoolId, examId: exam.id },
-    select: { subjectId: true, studentId: true, marksObtained: true },
+    select: { subjectId: true, studentId: true, marksObtained: true, remark: true },
   });
-  const marksByStudent = new Map<string, Map<string, number>>();
+  const marksByStudent = new Map<
+    string,
+    Map<string, { marksObtained: number; remark: string | null }>
+  >();
   for (const m of allMarks) {
-    const inner = marksByStudent.get(m.studentId) ?? new Map<string, number>();
-    inner.set(m.subjectId, m.marksObtained.toNumber());
+    const inner = marksByStudent.get(m.studentId) ?? new Map();
+    inner.set(m.subjectId, {
+      marksObtained: m.marksObtained.toNumber(),
+      remark: m.remark,
+    });
     marksByStudent.set(m.studentId, inner);
   }
 
@@ -127,6 +135,24 @@ export default async function ExamDetailPage(
   });
   const bands = bandsToView(defaultScale?.bands ?? []);
   const hasScale = defaultScale !== null;
+
+  // Results review: which papers still miss a mark for a registered student.
+  const reviewPapers = exam.subjects.map((paper) => {
+    const rosterIds = roster.map((row) => row.student.id);
+    const recorded = new Set(
+      allMarks.filter((m) => m.subjectId === paper.subjectId).map((m) => m.studentId)
+    );
+    const missing = rosterIds.filter((studentId) => !recorded.has(studentId));
+    return {
+      subjectId: paper.subjectId,
+      subjectName: paper.subject.name,
+      maxMarks: paper.maxMarks.toNumber(),
+      recorded: recorded.size,
+      expected: rosterIds.length,
+      missing: missing.length,
+    };
+  });
+  const outstandingPapers = reviewPapers.filter((p) => p.missing > 0);
 
   const summaryRows = addRanks(
     roster.map((row) => {
@@ -171,7 +197,7 @@ export default async function ExamDetailPage(
           examId: exam.id,
           examSubjectId: selectedPaper.id,
         },
-        select: { id: true, studentId: true, marksObtained: true },
+        select: { id: true, studentId: true, marksObtained: true, remark: true },
       })
     : [];
   const markByStudent = new Map(subjectMarks.map((m) => [m.studentId, m]));
@@ -196,6 +222,7 @@ export default async function ExamDetailPage(
       name: fullName(row.student.firstName, row.student.middleName, row.student.lastName),
       studentNo: row.student.studentNo,
       obtained,
+      remark: existing?.remark ?? null,
       percentage,
       band: percentage === null || !hasScale ? null : gradeFor(bands, percentage),
       editable: canEditPaper,
@@ -251,6 +278,77 @@ export default async function ExamDetailPage(
           sizeBytes: paperBySubject.get(s.subjectId)?.sizeBytes ?? null,
         }))}
       />
+
+      {/* Results review & verification */}
+      <section className="overflow-hidden rounded-lg border border-border">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-5 py-4">
+          <div>
+            <h2 className="text-sm font-semibold">Results review</h2>
+            <p className="text-xs text-muted-foreground">
+              {exam.status === "COMPLETED"
+                ? "These results have been verified and the report cards released."
+                : outstandingPapers.length === 0
+                  ? "Every student has a mark in every paper. Verify to release the report cards."
+                  : `${outstandingPapers.length} paper${outstandingPapers.length === 1 ? "" : "s"} still missing marks.`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/${slug}/results/report-cards?examId=${encodeURIComponent(exam.id)}`}
+              className="rounded-md border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted"
+            >
+              Report cards
+            </Link>
+            {canVerifyResults && !archived ? (
+              <VerifyResultsButton
+                slug={slug}
+                examId={exam.id}
+                verified={exam.status === "COMPLETED"}
+              />
+            ) : null}
+          </div>
+        </div>
+        <div className="overflow-x-auto bg-card">
+          <table className="min-w-full divide-y divide-border text-sm">
+            <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 text-left font-medium">Paper</th>
+                <th className="px-4 py-3 text-center font-medium">Max marks</th>
+                <th className="px-4 py-3 text-center font-medium">Recorded</th>
+                <th className="px-4 py-3 text-center font-medium">Missing</th>
+                <th className="px-4 py-3 text-left font-medium">State</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {reviewPapers.map((paper) => (
+                <tr key={paper.subjectId}>
+                  <td className="px-4 py-2.5 font-medium">{paper.subjectName}</td>
+                  <td className="px-4 py-2.5 text-center text-muted-foreground">
+                    {paper.maxMarks}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    {paper.recorded} / {paper.expected}
+                  </td>
+                  <td className="px-4 py-2.5 text-center">
+                    {paper.missing === 0 ? (
+                      <span className="text-muted-foreground">0</span>
+                    ) : (
+                      <span className="font-medium text-destructive">{paper.missing}</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    {paper.missing === 0 ? (
+                      <Badge variant="secondary">Complete</Badge>
+                    ) : (
+                      <Badge variant="outline">Incomplete</Badge>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {/* Whole-exam summary */}
       <section className="overflow-hidden rounded-lg border border-border">

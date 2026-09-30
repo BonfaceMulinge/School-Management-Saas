@@ -14,6 +14,7 @@ export type MarksRowView = {
   name: string;
   studentNo: string | null;
   obtained: { id: string; value: number } | null;
+  remark: string | null;
   percentage: number | null;
   band: { grade: string; points: number | null } | null;
   editable: boolean;
@@ -110,18 +111,20 @@ export function MarksForm({
       <form action={formAction} noValidate>
         <div className="border-b border-border px-5 py-3">
           <p className="text-xs text-muted-foreground">
-            Enter marks out of {maxMarks} for {subjectName}. Leave a field empty to keep its current value.
+            Enter marks out of {maxMarks} for {subjectName}, plus an optional remark that appears on
+            the student&apos;s report card. Leave a mark empty to keep its current value.
           </p>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-border text-sm">
             <thead className="bg-muted/50 text-xs uppercase tracking-wide text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 text-left font-medium">Student</th>
-                <th className="px-4 py-3 text-center font-medium">Mark (max {maxMarks})</th>
-                <th className="px-4 py-3 text-center font-medium">%</th>
-                <th className="px-4 py-3 text-center font-medium">Grade</th>
-                <th className="px-4 py-3 text-right font-medium">Current</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium">Student</th>
+                <th scope="col" className="px-4 py-3 text-center font-medium">Mark (max {maxMarks})</th>
+                <th scope="col" className="px-4 py-3 text-center font-medium">%</th>
+                <th scope="col" className="px-4 py-3 text-center font-medium">Grade</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium">Teacher remark</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium">Current</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -150,6 +153,17 @@ export function MarksForm({
                   </td>
                   <td className="px-4 py-2.5 text-center font-medium">
                     {row.band?.grade ?? "—"}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <input
+                      type="text"
+                      name={`remark[${row.studentId}]`}
+                      defaultValue={row.remark ?? ""}
+                      maxLength={500}
+                      placeholder="e.g. Improved steadily this term"
+                      aria-label={`Teacher remark for ${row.name}`}
+                      className="h-8 w-full min-w-40 rounded-md border border-border bg-background px-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none"
+                    />
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     {row.obtained === null ? (

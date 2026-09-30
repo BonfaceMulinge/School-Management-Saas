@@ -59,10 +59,18 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
  */
 export function computeStudentExam(
   papers: ReadonlyArray<{ subjectId: string; subjectName: string; maxMarks: number }>,
-  marksBySubject: ReadonlyMap<string, number>,
+  marksBySubject: ReadonlyMap<string, { marksObtained: number; remark: string | null }>,
   bands: readonly BandView[]
 ): {
-  rows: Array<{ subjectId: string; subjectName: string; maxMarks: number; obtained: number | null; percentage: number | null; band: BandView | null }>;
+  rows: Array<{
+    subjectId: string;
+    subjectName: string;
+    maxMarks: number;
+    obtained: number | null;
+    remark: string | null;
+    percentage: number | null;
+    band: BandView | null;
+  }>;
   obtained: number;
   max: number;
   satPapers: number;
@@ -75,15 +83,16 @@ export function computeStudentExam(
   for (const paper of papers) {
     const mark = marksBySubject.get(paper.subjectId);
     if (mark !== undefined && mark !== null) {
-      obtained += mark;
+      obtained += mark.marksObtained;
       max += paper.maxMarks;
     }
-    const subjectPct = mark === undefined ? null : round1((mark / paper.maxMarks) * 100);
+    const subjectPct = mark === undefined ? null : round1((mark.marksObtained / paper.maxMarks) * 100);
     rows.push({
       subjectId: paper.subjectId,
       subjectName: paper.subjectName,
       maxMarks: paper.maxMarks,
-      obtained: mark ?? null,
+      obtained: mark?.marksObtained ?? null,
+      remark: mark?.remark ?? null,
       percentage: subjectPct,
       band: subjectPct === null ? null : gradeFor(bands, subjectPct),
     });

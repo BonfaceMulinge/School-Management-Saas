@@ -171,6 +171,7 @@ export default async function ResultsPage(props: PageProps<"/[school]/results">)
       subjectName: string;
       maxMarks: number;
       marksObtained: number | null;
+      remark: string | null;
       percentage: number | null;
       band: { grade: string; points: number | null; remark: string } | null;
     }>;
@@ -185,12 +186,15 @@ export default async function ResultsPage(props: PageProps<"/[school]/results">)
     const exam = selectedExam;
     const allMarks = await db.examMark.findMany({
       where: { schoolId: access.schoolId, examId: exam.id },
-      select: { studentId: true, subjectId: true, marksObtained: true },
+      select: { studentId: true, subjectId: true, marksObtained: true, remark: true },
     });
-    const marksByStudent = new Map<string, Map<string, number>>();
+    const marksByStudent = new Map<string, Map<string, { marksObtained: number; remark: string | null }>>();
     for (const m of allMarks) {
-      const inner = marksByStudent.get(m.studentId) ?? new Map<string, number>();
-      inner.set(m.subjectId, m.marksObtained.toNumber());
+      const inner = marksByStudent.get(m.studentId) ?? new Map();
+      inner.set(m.subjectId, {
+        marksObtained: m.marksObtained.toNumber(),
+        remark: m.remark,
+      });
       marksByStudent.set(m.studentId, inner);
     }
 
@@ -234,6 +238,7 @@ export default async function ResultsPage(props: PageProps<"/[school]/results">)
         subjectName: r.subjectName,
         maxMarks: r.maxMarks,
         marksObtained: r.obtained,
+        remark: r.remark,
         percentage: r.percentage,
         band: r.band,
       })),
@@ -491,7 +496,8 @@ export default async function ResultsPage(props: PageProps<"/[school]/results">)
                       <th className="px-4 py-3 text-center font-medium">%</th>
                       <th className="px-4 py-3 text-center font-medium">Grade</th>
                       <th className="px-4 py-3 text-center font-medium">Pts</th>
-                      <th className="px-4 py-3 text-left font-medium">Remark</th>
+                      <th className="px-4 py-3 text-center font-medium">Remark</th>
+                      <th className="px-4 py-3 text-left font-medium">Teacher comment</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -513,6 +519,9 @@ export default async function ResultsPage(props: PageProps<"/[school]/results">)
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {r.band?.remark ?? "—"}
+                        </td>
+                        <td className="px-4 py-3 italic text-muted-foreground">
+                          {r.remark ?? "—"}
                         </td>
                       </tr>
                     ))}

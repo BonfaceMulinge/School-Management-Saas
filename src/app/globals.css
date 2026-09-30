@@ -128,3 +128,38 @@
     @apply font-sans;
   }
 }
+
+/*
+ * Printing report cards: only `.print-sheet` blocks are printed, each on its
+ * own page, so admins can "Save as PDF" from the browser's print dialog.
+ */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+
+  .print-sheet {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    break-inside: avoid;
+    break-after: page;
+  }
+
+  .print-sheet:last-child {
+    break-after: auto;
+  }
+}
