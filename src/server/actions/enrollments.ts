@@ -22,10 +22,38 @@ function enrollmentSchema(withStudent = true) {
     studentId: withStudent ? z.string().min(1, "Student is required.") : z.string(),
     classId: z.string().min(1, "Class is required."),
     streamId: z.string().optional().nullable(),
+    pathwayId: z.string().optional().nullable(),
+    combinationId: z.string().optional().nullable(),
     academicYearId: z.string().min(1, "Academic year is required."),
     termId: z.string().optional().nullable(),
     status: enrollmentStatusEnum.optional().default("ACTIVE"),
   });
+}
+
+type EnrollmentData = {
+  studentId: string;
+  classId: string;
+  streamId?: string | null;
+  pathwayId?: string | null;
+  combinationId?: string | null;
+  academicYearId: string;
+  termId?: string | null;
+  status?: string | undefined;
+};
+
+async function resolveTarget(
+  access: { schoolId: string },
+  data: EnrollmentData
+) {
+  return resolveEnrollmentTarget(
+    access.schoolId,
+    data.classId,
+    data.academicYearId,
+    data.streamId ?? null,
+    data.termId ?? null,
+    data.pathwayId ?? null,
+    data.combinationId ?? null
+  );
 }
 
 /** Find the student's currently active enrollment in a given academic year. */
@@ -62,6 +90,8 @@ export async function enrollStudent(
     studentId: input.get("studentId"),
     classId: input.get("classId"),
     streamId: input.get("streamId") || null,
+    pathwayId: input.get("pathwayId") || null,
+    combinationId: input.get("combinationId") || null,
     academicYearId: input.get("academicYearId"),
     termId: input.get("termId") || null,
     status: input.get("status") || undefined,
@@ -75,15 +105,9 @@ export async function enrollStudent(
   if (!student) return fail("Student not found.");
   if (student.archived) return fail("An archived student cannot be enrolled.");
 
-  const target = await resolveEnrollmentTarget(
-    access.schoolId,
-    data.classId,
-    data.academicYearId,
-    data.streamId,
-    data.termId
-  );
+  const target = await resolveTarget(access, data);
   if (!target) {
-    return fail("The selected class, stream, year or term is invalid.");
+    return fail("The selected class, stream, year, term, pathway or combination is invalid.");
   }
 
   const existingActive = await activeEnrollmentInYear(
@@ -103,6 +127,8 @@ export async function enrollStudent(
       studentId: data.studentId,
       classId: target.classId,
       streamId: target.streamId,
+      pathwayId: target.pathwayId,
+      combinationId: target.combinationId,
       academicYearId: target.academicYearId,
       termId: target.termId,
       status: (data.status as EnrollmentStatus | undefined) ?? "ACTIVE",
@@ -124,6 +150,8 @@ export async function transferStudent(
     studentId: input.get("studentId"),
     classId: input.get("classId"),
     streamId: input.get("streamId") || null,
+    pathwayId: input.get("pathwayId") || null,
+    combinationId: input.get("combinationId") || null,
     academicYearId: input.get("academicYearId"),
     termId: input.get("termId") || null,
     status: input.get("status") || undefined,
@@ -137,15 +165,9 @@ export async function transferStudent(
   if (!student) return fail("Student not found.");
   if (student.archived) return fail("An archived student cannot be transferred.");
 
-  const target = await resolveEnrollmentTarget(
-    access.schoolId,
-    data.classId,
-    data.academicYearId,
-    data.streamId,
-    data.termId
-  );
+  const target = await resolveTarget(access, data);
   if (!target) {
-    return fail("The selected class, stream, year or term is invalid.");
+    return fail("The selected class, stream, year, term, pathway or combination is invalid.");
   }
 
   const existingActive = await activeEnrollmentInYear(
@@ -167,6 +189,8 @@ export async function transferStudent(
         studentId: data.studentId,
         classId: target.classId,
         streamId: target.streamId,
+        pathwayId: target.pathwayId,
+        combinationId: target.combinationId,
         academicYearId: target.academicYearId,
         termId: target.termId,
         status: (data.status as EnrollmentStatus | undefined) ?? "ACTIVE",
@@ -189,6 +213,8 @@ export async function promoteStudent(
     studentId: input.get("studentId"),
     classId: input.get("classId"),
     streamId: input.get("streamId") || null,
+    pathwayId: input.get("pathwayId") || null,
+    combinationId: input.get("combinationId") || null,
     academicYearId: input.get("academicYearId"),
     termId: input.get("termId") || null,
     status: input.get("status") || undefined,
@@ -202,14 +228,8 @@ export async function promoteStudent(
   if (!student) return fail("Student not found.");
   if (student.archived) return fail("An archived student cannot be promoted.");
 
-  const target = await resolveEnrollmentTarget(
-    access.schoolId,
-    data.classId,
-    data.academicYearId,
-    data.streamId,
-    data.termId
-  );
-  if (!target) return fail("The selected class, stream, year or term is invalid.");
+  const target = await resolveTarget(access, data);
+  if (!target) return fail("The selected class, stream, year, term, pathway or combination is invalid.");
 
   const targetYear = await db.academicYear.findUnique({
     where: { id: target.academicYearId },
@@ -247,6 +267,8 @@ export async function promoteStudent(
         studentId: data.studentId,
         classId: target.classId,
         streamId: target.streamId,
+        pathwayId: target.pathwayId,
+        combinationId: target.combinationId,
         academicYearId: target.academicYearId,
         termId: target.termId,
         status: (data.status as EnrollmentStatus | undefined) ?? "ACTIVE",

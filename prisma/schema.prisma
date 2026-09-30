@@ -29,56 +29,58 @@ enum SchoolStatus {
 /// A school is the tenant/tenant boundary of this multi-school SaaS.
 /// All business data created in later phases will be scoped to a School.
 model School {
-  id             String         @id @default(cuid())
-  name           String
-  slug           String         @unique
-  email          String?        @unique
-  phone          String?
-  address        String?
-  motto          String?
-  website        String?
-  logoUrl        String?
-  currency       String         @default("USD")
-  timezone       String         @default("UTC")
-  primaryColor   String? // Branding accent (hex)
-  status         SchoolStatus   @default(ACTIVE)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id           String       @id @default(cuid())
+  name         String
+  slug         String       @unique
+  email        String?      @unique
+  phone        String?
+  address      String?
+  motto        String?
+  website      String?
+  logoUrl      String?
+  currency     String       @default("USD")
+  timezone     String       @default("UTC")
+  primaryColor String? // Branding accent (hex)
+  status       SchoolStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  memberships    Membership[]
-  academicYears  AcademicYear[]
-  classes        Class[]
-  subjects       Subject[]
-  students       Student[]
-  staff          Staff[]
-  teacherAssignments TeacherAssignment[]
-  enrollments    Enrollment[]
-  guardians      Guardian[]
-  attendances    Attendance[]
-  attendanceChanges AttendanceChange[]
-  exams          Exam[]
-  examMarks      ExamMark[]
-  gradeScales    GradeScale[]
-  feeStructures  FeeStructure[]
-  studentCharges StudentCharge[]
-  chargeAdjustments ChargeAdjustment[]
-  feePayments    FeePayment[]
-  paymentAdjustments PaymentAdjustment[]
-  announcements  Announcement[]
+  memberships            Membership[]
+  academicYears          AcademicYear[]
+  classes                Class[]
+  subjects               Subject[]
+  seniorSchoolPathways   SeniorSchoolPathway[]
+  subjectCombinations    SubjectCombination[]
+  students               Student[]
+  staff                  Staff[]
+  teacherAssignments     TeacherAssignment[]
+  enrollments            Enrollment[]
+  guardians              Guardian[]
+  attendances            Attendance[]
+  attendanceChanges      AttendanceChange[]
+  exams                  Exam[]
+  examMarks              ExamMark[]
+  gradeScales            GradeScale[]
+  feeStructures          FeeStructure[]
+  studentCharges         StudentCharge[]
+  chargeAdjustments      ChargeAdjustment[]
+  feePayments            FeePayment[]
+  paymentAdjustments     PaymentAdjustment[]
+  announcements          Announcement[]
   announcementRecipients AnnouncementRecipient[]
-  events         Event[]
-  eventRecipients EventRecipient[]
-  conversations  Conversation[]
-  messages       Message[]
-  notifications  Notification[]
-  studentDocuments StudentDocument[]
-  subscriptions  SchoolSubscription[]
-  auditLogs      AuditLog[]
-  subscriptionEvents SubscriptionEvent[]
-  settings       SchoolSettings?
-  onboarding     SchoolOnboarding?
-  paymentTransactions PaymentTransaction[]
-  outboundMessages    OutboundMessage[]
+  events                 Event[]
+  eventRecipients        EventRecipient[]
+  conversations          Conversation[]
+  messages               Message[]
+  notifications          Notification[]
+  studentDocuments       StudentDocument[]
+  subscriptions          SchoolSubscription[]
+  auditLogs              AuditLog[]
+  subscriptionEvents     SubscriptionEvent[]
+  settings               SchoolSettings?
+  onboarding             SchoolOnboarding?
+  paymentTransactions    PaymentTransaction[]
+  outboundMessages       OutboundMessage[]
 
   @@index([name])
   @@index([status])
@@ -86,63 +88,63 @@ model School {
 
 /// A platform user. Users can belong to one or more schools.
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  name         String?
-  passwordHash String?
-  mustChangePassword Boolean @default(false)
+  id                         String        @id @default(cuid())
+  email                      String        @unique
+  name                       String?
+  passwordHash               String?
+  mustChangePassword         Boolean       @default(false)
   temporaryPasswordExpiresAt DateTime?
-  passwordChangedAt DateTime?
-  avatarUrl    String?
-  emailVerified DateTime?
+  passwordChangedAt          DateTime?
+  avatarUrl                  String?
+  emailVerified              DateTime?
   /// Optional platform-level role (not scoped to a school). When set, the
   /// user can operate across all schools and is distinct from school-scoped
   /// Membership roles.
-  platformRole PlatformRole?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  platformRole               PlatformRole?
+  createdAt                  DateTime      @default(now())
+  updatedAt                  DateTime      @updatedAt
 
-  memberships     Membership[]
-  sessions        Session[]
-  studentProfiles Student[]
-  staffProfiles   Staff[]
-  teacherAssignments TeacherAssignment[]
-  guardianships   Guardian[]
-  recordedAttendances Attendance[]
-  attendanceChangesMade AttendanceChange[]
-  examsCreated      Exam[]       @relation("ExamCreatedBy")
-  examsUpdated      Exam[]       @relation("ExamUpdatedBy")
-  marksRecorded     ExamMark[]   @relation("MarkRecordedBy")
-  marksUpdated      ExamMark[]   @relation("MarkUpdatedBy")
-  chargesRecorded   StudentCharge[]  @relation("ChargeRecordedBy")
-  adjustmentsRecorded ChargeAdjustment[] @relation("AdjustmentRecordedBy")
-  paymentsRecorded  FeePayment[] @relation("PaymentRecordedBy")
-  paymentsReversed  FeePayment[] @relation("PaymentReversedBy")
-  paymentEditsRecorded PaymentAdjustment[] @relation("PaymentEditRecordedBy")
-  announcementsCreated      Announcement[] @relation("AnnouncementCreatedBy")
-  announcementsUpdated      Announcement[] @relation("AnnouncementUpdatedBy")
+  memberships               Membership[]
+  sessions                  Session[]
+  studentProfiles           Student[]
+  staffProfiles             Staff[]
+  teacherAssignments        TeacherAssignment[]
+  guardianships             Guardian[]
+  recordedAttendances       Attendance[]
+  attendanceChangesMade     AttendanceChange[]
+  examsCreated              Exam[]                    @relation("ExamCreatedBy")
+  examsUpdated              Exam[]                    @relation("ExamUpdatedBy")
+  marksRecorded             ExamMark[]                @relation("MarkRecordedBy")
+  marksUpdated              ExamMark[]                @relation("MarkUpdatedBy")
+  chargesRecorded           StudentCharge[]           @relation("ChargeRecordedBy")
+  adjustmentsRecorded       ChargeAdjustment[]        @relation("AdjustmentRecordedBy")
+  paymentsRecorded          FeePayment[]              @relation("PaymentRecordedBy")
+  paymentsReversed          FeePayment[]              @relation("PaymentReversedBy")
+  paymentEditsRecorded      PaymentAdjustment[]       @relation("PaymentEditRecordedBy")
+  announcementsCreated      Announcement[]            @relation("AnnouncementCreatedBy")
+  announcementsUpdated      Announcement[]            @relation("AnnouncementUpdatedBy")
   announcementRecipients    AnnouncementRecipient[]
-  eventsCreated             Event[]        @relation("EventCreatedBy")
-  eventsUpdated             Event[]        @relation("EventUpdatedBy")
+  eventsCreated             Event[]                   @relation("EventCreatedBy")
+  eventsUpdated             Event[]                   @relation("EventUpdatedBy")
   eventRecipients           EventRecipient[]
-  conversationsCreated      Conversation[] @relation("ConversationCreatedBy")
+  conversationsCreated      Conversation[]            @relation("ConversationCreatedBy")
   conversationParticipants  ConversationParticipant[]
-  messagesSent              Message[]      @relation("MessageSender")
+  messagesSent              Message[]                 @relation("MessageSender")
   notifications             Notification[]
-  documentsUploaded         StudentDocument[] @relation("DocumentUploadedBy")
-  documentsUpdated          StudentDocument[] @relation("DocumentUpdatedBy")
-  examPapersUploaded        ExamPaper[]       @relation("PaperUploadedBy")
-  createdPlans              SubscriptionPlan[] @relation("PlanCreatedBy")
-  updatedPlans              SubscriptionPlan[] @relation("PlanUpdatedBy")
-  createdSubscriptions      SchoolSubscription[] @relation("SubscriptionCreatedBy")
-  updatedSubscriptions      SchoolSubscription[] @relation("SubscriptionUpdatedBy")
+  documentsUploaded         StudentDocument[]         @relation("DocumentUploadedBy")
+  documentsUpdated          StudentDocument[]         @relation("DocumentUpdatedBy")
+  examPapersUploaded        ExamPaper[]               @relation("PaperUploadedBy")
+  createdPlans              SubscriptionPlan[]        @relation("PlanCreatedBy")
+  updatedPlans              SubscriptionPlan[]        @relation("PlanUpdatedBy")
+  createdSubscriptions      SchoolSubscription[]      @relation("SubscriptionCreatedBy")
+  updatedSubscriptions      SchoolSubscription[]      @relation("SubscriptionUpdatedBy")
   auditLogs                 AuditLog[]
   subscriptionEvents        SubscriptionEvent[]
-  paymentsInitiated         PaymentTransaction[] @relation("PaymentInitiatedBy")
-  paymentsVerified          PaymentTransaction[] @relation("PaymentVerifiedBy")
-  feePaymentsVerified       FeePayment[]         @relation("FeePaymentVerifiedBy")
+  paymentsInitiated         PaymentTransaction[]      @relation("PaymentInitiatedBy")
+  paymentsVerified          PaymentTransaction[]      @relation("PaymentVerifiedBy")
+  feePaymentsVerified       FeePayment[]              @relation("FeePaymentVerifiedBy")
   outboundMessages          OutboundMessage[]
-  integrationConfigsUpdated IntegrationConfig[]  @relation("IntegrationConfigUpdatedBy")
+  integrationConfigsUpdated IntegrationConfig[]       @relation("IntegrationConfigUpdatedBy")
 
   @@index([email])
   @@index([platformRole])
@@ -152,13 +154,13 @@ model User {
 /// Only the SHA-256 hash of the session token is stored; the raw token is
 /// held in an httpOnly cookie on the client and never persisted or exposed.
 model Session {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique
-  userId    String
-  expiresAt DateTime
-  userAgent String?
-  ipAddress String?
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  tokenHash  String   @unique
+  userId     String
+  expiresAt  DateTime
+  userAgent  String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
   lastUsedAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -205,14 +207,14 @@ model AcademicYear {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  terms  Term[]
-  enrollments Enrollment[]
+  school            School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  terms             Term[]
+  enrollments       Enrollment[]
   attendanceRecords Attendance[]
-  exams  Exam[]
-  feeStructures  FeeStructure[]
-  studentCharges StudentCharge[]
-  feePayments    FeePayment[]
+  exams             Exam[]
+  feeStructures     FeeStructure[]
+  studentCharges    StudentCharge[]
+  feePayments       FeePayment[]
 
   @@unique([schoolId, name])
   @@index([schoolId, isActive])
@@ -222,23 +224,23 @@ model AcademicYear {
 /// A term within an academic year. A school has at most one active term at a
 /// given time. Terms within a year must not overlap.
 model Term {
-  id            String      @id @default(cuid())
+  id             String   @id @default(cuid())
   academicYearId String
-  name          String
-  startDate     DateTime
-  endDate       DateTime
-  isActive      Boolean     @default(false)
-  archived      Boolean     @default(false)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  isActive       Boolean  @default(false)
+  archived       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  enrollments  Enrollment[]
+  academicYear      AcademicYear    @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  enrollments       Enrollment[]
   attendanceRecords Attendance[]
-  exams        Exam[]
-  feeStructures FeeStructure[]
-  studentCharges StudentCharge[]
-  feePayments  FeePayment[]
+  exams             Exam[]
+  feeStructures     FeeStructure[]
+  studentCharges    StudentCharge[]
+  feePayments       FeePayment[]
 
   @@unique([academicYearId, name])
   @@index([academicYearId, isActive])
@@ -246,28 +248,32 @@ model Term {
 
 /// A class/grade (e.g. Grade 1, Form 2) owned by a school.
 model Class {
-  id           String   @id @default(cuid())
-  schoolId     String
-  name         String
-  archived     Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id        String   @id @default(cuid())
+  schoolId  String
+  name      String
+  /// Optional numeric ordering/stage for CBC levels (e.g. PP1=0, PP2=1,
+  /// Grade 1=2 ... Grade 12=13). Null classes sort by name.
+  level     Int?
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  school      School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  streams     Stream[]
-  assignments TeacherAssignment[]
-  enrollments Enrollment[]
+  school            School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  streams           Stream[]
+  assignments       TeacherAssignment[]
+  enrollments       Enrollment[]
   attendanceRecords Attendance[]
-  exams  Exam[]
-  feeStructures FeeStructure[]
-  studentCharges StudentCharge[]
-  feePayments FeePayment[]
-  announcements  Announcement[]
-  events         Event[]
-  conversations  Conversation[]
+  exams             Exam[]
+  feeStructures     FeeStructure[]
+  studentCharges    StudentCharge[]
+  feePayments       FeePayment[]
+  announcements     Announcement[]
+  events            Event[]
+  conversations     Conversation[]
 
   @@unique([schoolId, name])
   @@index([schoolId, archived])
+  @@index([schoolId, level, archived])
 }
 
 /// A stream/division within a class (e.g. East, West, A, B). Inherits tenancy
@@ -280,17 +286,17 @@ model Stream {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  class       Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
-  assignments TeacherAssignment[]
-  enrollments Enrollment[]
+  class             Class               @relation(fields: [classId], references: [id], onDelete: Cascade)
+  assignments       TeacherAssignment[]
+  enrollments       Enrollment[]
   attendanceRecords Attendance[]
-  exams  Exam[]
-  feeStructures FeeStructure[]
-  studentCharges StudentCharge[]
-  feePayments FeePayment[]
-  announcements  Announcement[]
-  events         Event[]
-  conversations  Conversation[]
+  exams             Exam[]
+  feeStructures     FeeStructure[]
+  studentCharges    StudentCharge[]
+  feePayments       FeePayment[]
+  announcements     Announcement[]
+  events            Event[]
+  conversations     Conversation[]
 
   @@unique([classId, name])
   @@index([classId, archived])
@@ -308,11 +314,12 @@ model Subject {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  school      School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  assignments TeacherAssignment[]
-  examSubjects  ExamSubject[]
-  examMarks     ExamMark[]
-  examPapers    ExamPaper[]
+  school             School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  assignments        TeacherAssignment[]
+  examSubjects       ExamSubject[]
+  examMarks          ExamMark[]
+  examPapers         ExamPaper[]
+  combinationMembers SubjectCombinationSubject[]
 
   @@unique([schoolId, code])
   @@index([schoolId, archived])
@@ -342,43 +349,105 @@ model TeacherAssignment {
   @@index([schoolId, subjectId])
 }
 
+/// A Senior School (Grade 10-12) learning pathway under the CBC. Presence is
+/// optional per school; senior schools define their own pathways (e.g. STEM,
+/// Arts & Sports Science, Social Sciences, Business & Entrepreneurial Studies).
+/// Fully configurable — nothing is hard-coded in the schema.
+model SeniorSchoolPathway {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  code        String
+  description String?
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school       School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  combinations SubjectCombination[]
+  enrollments  Enrollment[]
+
+  @@unique([schoolId, code])
+  @@unique([schoolId, name])
+  @@index([schoolId, archived])
+}
+
+/// A Senior School subject combination (a set of subjects a student takes
+/// within a pathway). Members are ordered via SubjectCombinationSubject.
+model SubjectCombination {
+  id          String   @id @default(cuid())
+  schoolId    String
+  name        String
+  code        String
+  description String?
+  archived    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  school                School                      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  subjects              SubjectCombinationSubject[]
+  enrollments           Enrollment[]
+  seniorSchoolPathway   SeniorSchoolPathway?        @relation(fields: [seniorSchoolPathwayId], references: [id])
+  seniorSchoolPathwayId String?
+
+  @@unique([schoolId, code])
+  @@unique([schoolId, name])
+  @@index([schoolId, archived])
+}
+
+/// Ordered membership of a subject within a combination.
+model SubjectCombinationSubject {
+  id            String   @id @default(cuid())
+  combinationId String
+  subjectId     String
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  combination SubjectCombination @relation(fields: [combinationId], references: [id], onDelete: Cascade)
+  subject     Subject            @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+
+  @@unique([combinationId, subjectId])
+  @@index([subjectId])
+}
+
 /// A student profile at a school. A student may have a linked platform User
 /// (optional) or be an unlinked record. Students are archived, never
 /// hard-deleted, to preserve historical records.
 model Student {
-  id        String   @id @default(cuid())
-  schoolId  String
-  userId    String?
-  firstName String
-  middleName String?
-  lastName  String
-  gender    Gender?
-  dateOfBirth DateTime?
-  studentNo String? // school-assigned admission number
-  admissionDate DateTime?
-  status    StudentStatus @default(ACTIVE)
-  photoUrl  String?
-  address   String?
-  phone     String?
-  emergencyContactName String?
-  emergencyContactPhone String?
+  id                       String        @id @default(cuid())
+  schoolId                 String
+  userId                   String?
+  firstName                String
+  middleName               String?
+  lastName                 String
+  gender                   Gender?
+  dateOfBirth              DateTime?
+  studentNo                String? // school-assigned admission number
+  admissionDate            DateTime?
+  status                   StudentStatus @default(ACTIVE)
+  photoUrl                 String?
+  address                  String?
+  phone                    String?
+  emergencyContactName     String?
+  emergencyContactPhone    String?
   emergencyContactRelation String?
-  previousSchool String?
-  house     String? // house / category assignment
-  archived  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  previousSchool           String?
+  house                    String? // house / category assignment
+  archived                 Boolean       @default(false)
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
 
-  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
-  enrollments Enrollment[]
-  guardians   Guardian[]
-  attendanceRecords Attendance[]
-  examMarks   ExamMark[]
-  studentCharges StudentCharge[]
-  chargeAdjustments ChargeAdjustment[]
-  feePayments FeePayment[]
-  documents   StudentDocument[]
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  user                User?                @relation(fields: [userId], references: [id], onDelete: SetNull)
+  enrollments         Enrollment[]
+  guardians           Guardian[]
+  attendanceRecords   Attendance[]
+  examMarks           ExamMark[]
+  studentCharges      StudentCharge[]
+  chargeAdjustments   ChargeAdjustment[]
+  feePayments         FeePayment[]
+  documents           StudentDocument[]
   paymentTransactions PaymentTransaction[]
 
   @@unique([schoolId, studentNo])
@@ -408,10 +477,10 @@ enum StaffStatus {
 /// employment history. The member's contact email lives on the linked User;
 /// staff-only contact details (phone, department) live here.
 model Staff {
-  id         String     @id @default(cuid())
+  id         String      @id @default(cuid())
   schoolId   String
   userId     String?
-  role       StaffRole  @default(TEACHER)
+  role       StaffRole   @default(TEACHER)
   staffNo    String? // school-assigned staff/employee number
   firstName  String
   middleName String?
@@ -421,9 +490,9 @@ model Staff {
   department String?
   position   String?
   status     StaffStatus @default(ACTIVE)
-  archived   Boolean    @default(false)
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
+  archived   Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -450,9 +519,9 @@ model Guardian {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  school   School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school   School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   student  Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  guardian User   @relation(fields: [guardianUserId], references: [id], onDelete: Cascade)
+  guardian User    @relation(fields: [guardianUserId], references: [id], onDelete: Cascade)
 
   @@unique([schoolId, studentId, guardianUserId])
   @@index([schoolId, guardianUserId])
@@ -463,32 +532,37 @@ model Guardian {
 /// Year and optional Term at their school. This is the academic-structure
 /// extent of enrollment; the full student-management workflow is a later phase.
 model Enrollment {
-  id            String   @id @default(cuid())
-  schoolId      String
-  studentId     String
-  classId       String
-  streamId      String?
+  id             String           @id @default(cuid())
+  schoolId       String
+  studentId      String
+  classId        String
+  streamId       String?
+  pathwayId      String?
+  combinationId  String?
   academicYearId String
-  termId        String?
-  status        EnrollmentStatus @default(ACTIVE)
-  enrolledAt    DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  termId         String?
+  status         EnrollmentStatus @default(ACTIVE)
+  enrolledAt     DateTime         @default(now())
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  class        Class        @relation(fields: [classId], references: [id], onDelete: Cascade)
-  stream       Stream?      @relation(fields: [streamId], references: [id], onDelete: SetNull)
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
-  term         Term?        @relation(fields: [termId], references: [id], onDelete: SetNull)
+  school            School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student           Student              @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  class             Class                @relation(fields: [classId], references: [id], onDelete: Cascade)
+  stream            Stream?              @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  pathway           SeniorSchoolPathway? @relation(fields: [pathwayId], references: [id], onDelete: SetNull)
+  combination       SubjectCombination?  @relation(fields: [combinationId], references: [id], onDelete: SetNull)
+  academicYear      AcademicYear         @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  term              Term?                @relation(fields: [termId], references: [id], onDelete: SetNull)
+  attendanceRecords Attendance[]
+  examMarks         ExamMark[]
 
   @@unique([schoolId, studentId, classId, streamId, academicYearId, termId])
   @@index([schoolId, classId])
   @@index([schoolId, studentId])
   @@index([schoolId, academicYearId])
-  attendanceRecords Attendance[]
-  examMarks         ExamMark[]
-
+  @@index([schoolId, pathwayId])
+  @@index([schoolId, combinationId])
   @@index([schoolId, studentId, classId])
 }
 
@@ -498,11 +572,11 @@ model Enrollment {
 /// if the student later transfers. Duplicates per (school, student, date) are
 /// prevented by the unique constraint.
 model Attendance {
-  id             String   @id @default(cuid())
+  id             String           @id @default(cuid())
   schoolId       String
   studentId      String
   recordedById   String
-  date           DateTime @db.Date // calendar day (UTC-normalised)
+  date           DateTime         @db.Date // calendar day (UTC-normalised)
   status         AttendanceStatus @default(PRESENT)
   note           String?
   academicYearId String
@@ -510,17 +584,17 @@ model Attendance {
   classId        String
   streamId       String?
   enrollmentId   String? // snapshot source enrollment, if still present
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 
-  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  student      Student      @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  recordedBy   User         @relation(fields: [recordedById], references: [id], onDelete: Restrict)
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
-  term         Term?        @relation(fields: [termId], references: [id], onDelete: SetNull)
-  class        Class        @relation(fields: [classId], references: [id], onDelete: Restrict)
-  stream       Stream?      @relation(fields: [streamId], references: [id], onDelete: SetNull)
-  enrollment   Enrollment?  @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  school       School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student      Student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  recordedBy   User               @relation(fields: [recordedById], references: [id], onDelete: Restrict)
+  academicYear AcademicYear       @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  term         Term?              @relation(fields: [termId], references: [id], onDelete: SetNull)
+  class        Class              @relation(fields: [classId], references: [id], onDelete: Restrict)
+  stream       Stream?            @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  enrollment   Enrollment?        @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
   changes      AttendanceChange[]
 
   @@unique([schoolId, studentId, date])
@@ -535,7 +609,7 @@ model Attendance {
 /// records who changed what (and the stated reason) so historical edits are
 /// never silently overwritten.
 model AttendanceChange {
-  id           String   @id @default(cuid())
+  id           String            @id @default(cuid())
   attendanceId String
   schoolId     String
   changedById  String
@@ -544,7 +618,7 @@ model AttendanceChange {
   oldNote      String?
   newNote      String?
   reason       String?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime          @default(now())
 
   school     School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   attendance Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
@@ -560,28 +634,28 @@ model AttendanceChange {
 /// definitions (same school, year, term, name, class and stream) are prevented
 /// by the unique constraint (server-side check also covers stream-wide exams).
 model Exam {
-  id             String      @id @default(cuid())
+  id             String     @id @default(cuid())
   schoolId       String
   name           String
-  type           ExamType    @default(CAT)
-  date           DateTime    @db.Date
+  type           ExamType   @default(CAT)
+  date           DateTime   @db.Date
   academicYearId String
   termId         String
   classId        String
   streamId       String?
-  status         ExamStatus  @default(DRAFT)
+  status         ExamStatus @default(DRAFT)
   createdById    String
   updatedById    String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
-  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
-  term         Term         @relation(fields: [termId], references: [id], onDelete: Restrict)
-  class        Class        @relation(fields: [classId], references: [id], onDelete: Restrict)
-  stream       Stream?      @relation(fields: [streamId], references: [id], onDelete: SetNull)
-  createdBy    User         @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedBy    User?        @relation("ExamUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  school       School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear  @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  term         Term          @relation(fields: [termId], references: [id], onDelete: Restrict)
+  class        Class         @relation(fields: [classId], references: [id], onDelete: Restrict)
+  stream       Stream?       @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  createdBy    User          @relation("ExamCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy    User?         @relation("ExamUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   subjects     ExamSubject[]
   marks        ExamMark[]
   papers       ExamPaper[]
@@ -602,8 +676,8 @@ model ExamSubject {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  exam    Exam        @relation(fields: [examId], references: [id], onDelete: Cascade)
-  subject Subject     @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  exam    Exam       @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subject Subject    @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   marks   ExamMark[]
 
   @@unique([examId, subjectId])
@@ -616,7 +690,7 @@ model ExamSubject {
 /// through an authenticated route handler. At most one paper per subject per
 /// exam (`@@unique([examId, subjectId])`); re-uploading replaces it.
 model ExamPaper {
-  id           String         @id @default(cuid())
+  id           String   @id @default(cuid())
   examId       String
   subjectId    String
   fileName     String
@@ -624,12 +698,12 @@ model ExamPaper {
   mimeType     String
   sizeBytes    Int
   uploadedById String
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  exam       Exam        @relation(fields: [examId], references: [id], onDelete: Cascade)
-  subject    Subject     @relation(fields: [subjectId], references: [id], onDelete: Restrict)
-  uploadedBy User        @relation("PaperUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+  exam       Exam    @relation(fields: [examId], references: [id], onDelete: Cascade)
+  subject    Subject @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  uploadedBy User    @relation("PaperUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
 
   @@unique([examId, subjectId])
   @@index([subjectId])
@@ -647,6 +721,8 @@ model ExamMark {
   studentId     String
   enrollmentId  String?
   marksObtained Decimal  @db.Decimal(5, 2)
+  /// Optional per-subject teacher comment/remark shown on report cards.
+  remark        String?
   recordedById  String
   updatedById   String?
   createdAt     DateTime @default(now())
@@ -679,7 +755,7 @@ model GradeScale {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  school School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  school School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   bands  GradeBand[]
 
   @@unique([schoolId, name])
@@ -729,11 +805,11 @@ model FeeStructure {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
-  term         Term         @relation(fields: [termId], references: [id], onDelete: Restrict)
-  class        Class        @relation(fields: [classId], references: [id], onDelete: Restrict)
-  stream       Stream?      @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  school       School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear       @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  term         Term               @relation(fields: [termId], references: [id], onDelete: Restrict)
+  class        Class              @relation(fields: [classId], references: [id], onDelete: Restrict)
+  stream       Stream?            @relation(fields: [streamId], references: [id], onDelete: SetNull)
   items        FeeStructureItem[]
   charges      StudentCharge[]
 
@@ -755,7 +831,7 @@ model FeeStructureItem {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  structure FeeStructure @relation(fields: [structureId], references: [id], onDelete: Cascade)
+  structure FeeStructure    @relation(fields: [structureId], references: [id], onDelete: Cascade)
   charges   StudentCharge[]
 
   @@unique([structureId, name])
@@ -767,31 +843,31 @@ model FeeStructureItem {
 /// Unique per (school, structure item, student, year, term) prevents double
 /// charging. Adjustments only ever reduce the billed amount.
 model StudentCharge {
-  id            String   @id @default(cuid())
-  schoolId      String
-  structureId   String
+  id              String   @id @default(cuid())
+  schoolId        String
+  structureId     String
   structureItemId String
-  studentId     String
-  academicYearId String
-  termId        String
-  classId       String
-  streamId      String?
-  itemName      String
-  amount        Decimal  @db.Decimal(12, 2)
-  description   String?
-  recordedById  String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  studentId       String
+  academicYearId  String
+  termId          String
+  classId         String
+  streamId        String?
+  itemName        String
+  amount          Decimal  @db.Decimal(12, 2)
+  description     String?
+  recordedById    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  school        School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  structure     FeeStructure   @relation(fields: [structureId], references: [id], onDelete: Restrict)
-  structureItem FeeStructureItem @relation(fields: [structureItemId], references: [id], onDelete: Restrict)
-  student       Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  academicYear  AcademicYear   @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
-  term          Term           @relation(fields: [termId], references: [id], onDelete: Restrict)
-  class         Class          @relation(fields: [classId], references: [id], onDelete: Restrict)
-  stream        Stream?        @relation(fields: [streamId], references: [id], onDelete: SetNull)
-  recordedBy    User?          @relation("ChargeRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+  school        School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  structure     FeeStructure       @relation(fields: [structureId], references: [id], onDelete: Restrict)
+  structureItem FeeStructureItem   @relation(fields: [structureItemId], references: [id], onDelete: Restrict)
+  student       Student            @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  academicYear  AcademicYear       @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  term          Term               @relation(fields: [termId], references: [id], onDelete: Restrict)
+  class         Class              @relation(fields: [classId], references: [id], onDelete: Restrict)
+  stream        Stream?            @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  recordedBy    User?              @relation("ChargeRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
   adjustments   ChargeAdjustment[]
 
   @@unique([schoolId, structureItemId, studentId, academicYearId, termId])
@@ -803,20 +879,20 @@ model StudentCharge {
 /// An explicit discount / waiver / adjustment on a charge. Always carries a
 /// reason and the recording user; immutable once created.
 model ChargeAdjustment {
-  id           String   @id @default(cuid())
+  id           String         @id @default(cuid())
   schoolId     String
   chargeId     String
   studentId    String
   type         AdjustmentType @default(ADJUSTMENT)
-  amount       Decimal  @db.Decimal(12, 2)
+  amount       Decimal        @db.Decimal(12, 2)
   reason       String
   recordedById String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime       @default(now())
 
-  school     School         @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  charge     StudentCharge  @relation(fields: [chargeId], references: [id], onDelete: Cascade)
-  student    Student        @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  recordedBy User           @relation("AdjustmentRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
+  school     School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  charge     StudentCharge @relation(fields: [chargeId], references: [id], onDelete: Cascade)
+  student    Student       @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  recordedBy User          @relation("AdjustmentRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
 
   @@index([chargeId])
   @@index([schoolId, studentId, createdAt])
@@ -827,42 +903,42 @@ model ChargeAdjustment {
 /// or reversed (status transitions, immutable PaymentAdjustment trail) — never
 /// hard-deleted.
 model FeePayment {
-  id            String        @id @default(cuid())
-  schoolId      String
-  studentId     String
-  receiptNo     String
-  amount        Decimal       @db.Decimal(12, 2)
-  date          DateTime      @db.Date // UTC-normalized calendar day
-  method        PaymentMethod @default(CASH)
-  otherMethod   String?
-  referenceNo   String?
-  note          String?
-  academicYearId String
-  termId        String? // null = payment toward the whole academic year
-  classId       String
-  streamId      String?
-  status        PaymentStatus @default(APPLIED)
-  recordedById  String
-  reversedById  String?
-  reversedAt    DateTime?
-  provider      String? // verified payment-provider name (ONLINE method)
+  id                String        @id @default(cuid())
+  schoolId          String
+  studentId         String
+  receiptNo         String
+  amount            Decimal       @db.Decimal(12, 2)
+  date              DateTime      @db.Date // UTC-normalized calendar day
+  method            PaymentMethod @default(CASH)
+  otherMethod       String?
+  referenceNo       String?
+  note              String?
+  academicYearId    String
+  termId            String? // null = payment toward the whole academic year
+  classId           String
+  streamId          String?
+  status            PaymentStatus @default(APPLIED)
+  recordedById      String
+  reversedById      String?
+  reversedAt        DateTime?
+  provider          String? // verified payment-provider name (ONLINE method)
   providerReference String? // provider transaction/reference id
   providerEventId   String? // verified provider event id from the callback
-  verifiedById  String?
-  verifiedAt    DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  verifiedById      String?
+  verifiedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
-  school       School       @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  student      Student      @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
-  term         Term?        @relation(fields: [termId], references: [id], onDelete: SetNull)
-  class        Class        @relation(fields: [classId], references: [id], onDelete: Restrict)
-  stream       Stream?      @relation(fields: [streamId], references: [id], onDelete: SetNull)
-  recordedBy   User         @relation("PaymentRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
-  reversedBy   User?        @relation("PaymentReversedBy", fields: [reversedById], references: [id], onDelete: SetNull)
-  verifiedBy   User?        @relation("FeePaymentVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
-  adjustments  PaymentAdjustment[]
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student             Student              @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  academicYear        AcademicYear         @relation(fields: [academicYearId], references: [id], onDelete: Restrict)
+  term                Term?                @relation(fields: [termId], references: [id], onDelete: SetNull)
+  class               Class                @relation(fields: [classId], references: [id], onDelete: Restrict)
+  stream              Stream?              @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  recordedBy          User                 @relation("PaymentRecordedBy", fields: [recordedById], references: [id], onDelete: Restrict)
+  reversedBy          User?                @relation("PaymentReversedBy", fields: [reversedById], references: [id], onDelete: SetNull)
+  verifiedBy          User?                @relation("FeePaymentVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+  adjustments         PaymentAdjustment[]
   paymentTransactions PaymentTransaction[]
 
   @@unique([schoolId, receiptNo])
@@ -876,19 +952,19 @@ model FeePayment {
 /// what, from what to what, and why. Supports full reversals (newAmount null)
 /// and amount/date/method corrections.
 model PaymentAdjustment {
-  id           String   @id @default(cuid())
+  id           String                @id @default(cuid())
   schoolId     String
   paymentId    String
   type         PaymentAdjustmentType @default(CORRECT)
-  oldAmount    Decimal  @db.Decimal(12, 2)
-  newAmount    Decimal? @db.Decimal(12, 2)
-  oldDate      DateTime? @db.Date
-  newDate      DateTime? @db.Date
+  oldAmount    Decimal               @db.Decimal(12, 2)
+  newAmount    Decimal?              @db.Decimal(12, 2)
+  oldDate      DateTime?             @db.Date
+  newDate      DateTime?             @db.Date
   oldMethod    PaymentMethod?
   newMethod    PaymentMethod?
   reason       String
   recordedById String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime              @default(now())
 
   school     School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   payment    FeePayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
@@ -918,7 +994,7 @@ model PaymentAdjustment {
 /// hides the post everywhere. `expiresAt` stops a published announcement
 /// being listed after a given date.
 model Announcement {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   schoolId    String
   title       String
   body        String
@@ -930,15 +1006,15 @@ model Announcement {
   expiresAt   DateTime?
   createdById String
   updatedById String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 
-  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  class       Class?      @relation(fields: [classId], references: [id], onDelete: SetNull)
-  stream      Stream?     @relation(fields: [streamId], references: [id], onDelete: SetNull)
-  createdBy   User        @relation("AnnouncementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedBy   User?       @relation("AnnouncementUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
-  recipients  AnnouncementRecipient[]
+  school     School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  class      Class?                  @relation(fields: [classId], references: [id], onDelete: SetNull)
+  stream     Stream?                 @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  createdBy  User                    @relation("AnnouncementCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy  User?                   @relation("AnnouncementUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  recipients AnnouncementRecipient[]
 
   @@index([schoolId, status, publishAt])
   @@index([schoolId, audience])
@@ -982,12 +1058,12 @@ model Event {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
-  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  class       Class?      @relation(fields: [classId], references: [id], onDelete: SetNull)
-  stream      Stream?     @relation(fields: [streamId], references: [id], onDelete: SetNull)
-  createdBy   User        @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedBy   User?       @relation("EventUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
-  recipients  EventRecipient[]
+  school     School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  class      Class?           @relation(fields: [classId], references: [id], onDelete: SetNull)
+  stream     Stream?          @relation(fields: [streamId], references: [id], onDelete: SetNull)
+  createdBy  User             @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy  User?            @relation("EventUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  recipients EventRecipient[]
 
   @@index([schoolId, status, startsAt])
   @@index([schoolId, startsAt])
@@ -1014,16 +1090,16 @@ model EventRecipient {
 /// only read and reply inside conversations they belong to. `lastMessageAt`
 /// is bumped on every message so the list can be sorted by recency.
 model Conversation {
-  id            String          @id @default(cuid())
+  id            String           @id @default(cuid())
   schoolId      String
   kind          ConversationKind @default(DIRECT)
   subject       String
   classId       String?
   streamId      String?
   createdById   String
-  lastMessageAt DateTime        @default(now())
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  lastMessageAt DateTime         @default(now())
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
 
   school       School                    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   class        Class?                    @relation(fields: [classId], references: [id], onDelete: SetNull)
@@ -1073,7 +1149,7 @@ model Message {
 /// user explicitly marks the notification as read. `link` is a relative path
 /// to the relevant page.
 model Notification {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   schoolId  String
   userId    String
   type      NotificationType
@@ -1081,7 +1157,7 @@ model Notification {
   message   String?
   link      String?
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1103,24 +1179,24 @@ model Notification {
 /// medical records, transcripts, etc.). The document's storage key is
 /// never exposed to the client and files are never served from public URLs.
 model StudentDocument {
-  id          String        @id @default(cuid())
-  schoolId    String
-  studentId   String
-  type        DocumentType  @default(OTHER)
-  title       String
-  description String?
-  storageKey  String? // opaque key into the backing store; null = unpersisted
-  mimeType    String
-  sizeBytes   Int
+  id           String       @id @default(cuid())
+  schoolId     String
+  studentId    String
+  type         DocumentType @default(OTHER)
+  title        String
+  description  String?
+  storageKey   String? // opaque key into the backing store; null = unpersisted
+  mimeType     String
+  sizeBytes    Int
   uploadedById String
-  updatedById String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  updatedById  String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  school      School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  student     Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  uploadedBy  User        @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
-  updatedBy   User?       @relation("DocumentUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  school     School  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student    Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  uploadedBy User    @relation("DocumentUploadedBy", fields: [uploadedById], references: [id], onDelete: Restrict)
+  updatedBy  User?   @relation("DocumentUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@index([schoolId, studentId, createdAt])
   @@index([schoolId, type])
@@ -1133,24 +1209,24 @@ model StudentDocument {
 
 /// A configurable SaaS subscription plan.
 model SubscriptionPlan {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String?
-  annualPrice Int      // in minor units (e.g., cents)
-  isActive    Boolean  @default(true)
-  studentLimit Int?    // null = unlimited
-  staffLimit   Int?    // null = unlimited
-  features    Json?    // feature flags as JSON object
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  createdById String
-  updatedById String
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String?
+  annualPrice  Int // in minor units (e.g., cents)
+  isActive     Boolean  @default(true)
+  studentLimit Int? // null = unlimited
+  staffLimit   Int? // null = unlimited
+  features     Json? // feature flags as JSON object
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  createdById  String
+  updatedById  String
 
   subscriptions SchoolSubscription[]
-  createdBy     User      @relation("PlanCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedBy     User      @relation("PlanUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  createdBy     User                 @relation("PlanCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy     User                 @relation("PlanUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
   events        SubscriptionEvent[]
 
   @@index([isActive])
@@ -1168,29 +1244,29 @@ enum SubscriptionStatus {
 
 /// A school's subscription to a plan.
 model SchoolSubscription {
-  id            String             @id @default(cuid())
-  schoolId      String
-  planId        String
-  status        SubscriptionStatus @default(TRIAL)
-  startDate     DateTime
-  endDate       DateTime?
-  gracePeriodEnd DateTime?
-  cancelledAt   DateTime?
-  paymentRef    String?
-  provider      String? // verified payment-provider name
+  id                String             @id @default(cuid())
+  schoolId          String
+  planId            String
+  status            SubscriptionStatus @default(TRIAL)
+  startDate         DateTime
+  endDate           DateTime?
+  gracePeriodEnd    DateTime?
+  cancelledAt       DateTime?
+  paymentRef        String?
+  provider          String? // verified payment-provider name
   providerReference String? // provider transaction/reference id
   providerEventId   String? // verified provider event id from the callback
-  notes         String?
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
-  createdById   String
-  updatedById   String
+  notes             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  createdById       String
+  updatedById       String
 
-  school        School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  plan          SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
-  createdBy     User               @relation("SubscriptionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedBy     User               @relation("SubscriptionUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
-  events        SubscriptionEvent[]
+  school              School               @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  plan                SubscriptionPlan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+  createdBy           User                 @relation("SubscriptionCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy           User                 @relation("SubscriptionUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict)
+  events              SubscriptionEvent[]
   paymentTransactions PaymentTransaction[]
 
   @@unique([schoolId])
@@ -1219,11 +1295,11 @@ model SubscriptionEvent {
   type           SubscriptionEventType
   fromStatus     SubscriptionStatus?
   toStatus       SubscriptionStatus
-  startDate      DateTime?             // start date captured at event time
-  endDate        DateTime?             // end date captured at event time
-  gracePeriodEnd DateTime?             // grace period end captured at event time
+  startDate      DateTime? // start date captured at event time
+  endDate        DateTime? // end date captured at event time
+  gracePeriodEnd DateTime? // grace period end captured at event time
   reason         String?
-  reference      String?               // external reference (payment ref, etc.)
+  reference      String? // external reference (payment ref, etc.)
   actorId        String
   createdAt      DateTime              @default(now())
 
@@ -1271,13 +1347,13 @@ model AuditLog {
   schoolId  String?
   actorId   String
   action    AuditAction
-  entity    String      // e.g., "School", "SubscriptionPlan"
+  entity    String // e.g., "School", "SubscriptionPlan"
   entityId  String
-  metadata  Json?       // additional context (before/after, etc.)
+  metadata  Json? // additional context (before/after, etc.)
   createdAt DateTime    @default(now())
 
-  school    School?     @relation(fields: [schoolId], references: [id], onDelete: SetNull)
-  actor     User        @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+  actor  User    @relation(fields: [actorId], references: [id], onDelete: Restrict)
 
   @@index([schoolId, createdAt])
   @@index([actorId, createdAt])
@@ -1298,27 +1374,27 @@ model AuditLog {
 /// One-to-one configurable preferences for a school tenant. A row is created
 /// automatically with the school so every tenant has defaults.
 model SchoolSettings {
-  id        String   @id @default(cuid())
-  schoolId  String   @unique
-  dateFormat String  @default("MM/dd/yyyy") // display layout (e.g. "dd.MM.yyyy")
-  timeFormat String  @default("24h") // "12h" | "24h"
-  firstDayOfWeek String @default("MONDAY") // MONDAY | SUNDAY | SATURDAY
+  id                       String   @id @default(cuid())
+  schoolId                 String   @unique
+  dateFormat               String   @default("MM/dd/yyyy") // display layout (e.g. "dd.MM.yyyy")
+  timeFormat               String   @default("24h") // "12h" | "24h"
+  firstDayOfWeek           String   @default("MONDAY") // MONDAY | SUNDAY | SATURDAY
   /// Ordered list of {id,label,color} attendance statuses shown on the register.
-  attendanceStatuses Json?
+  attendanceStatuses       Json?
   /// {passMark} and other grading defaults.
-  gradingPreferences Json?
+  gradingPreferences       Json?
   /// {prefix, padding, nextNumber, autoIncrement} receipt numbering defaults.
-  receiptNumbering Json?
+  receiptNumbering         Json?
   /// {termLengthDays} default academic settings.
-  defaultAcademicSettings Json?
+  defaultAcademicSettings  Json?
   /// Per-channel on/off flags for in-app notifications.
-  notificationPreferences Json?
+  notificationPreferences  Json?
   /// {contactEmail, defaultAudience} communication preferences.
   communicationPreferences Json?
   /// {invoicePrefix, receiptNote} finance preferences.
-  financeSettings Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  financeSettings          Json?
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   school School @relation(fields: [schoolId], references: [id], onDelete: Cascade)
 }
@@ -1432,36 +1508,36 @@ model IntegrationConfig {
 /// The single source of truth for provider-initiated money movement: amount,
 /// currency, provider reference, and server-verified status.
 model PaymentTransaction {
-  id            String   @id @default(cuid())
-  schoolId      String
-  purpose       PaymentPurpose
-  feePaymentId  String? // populated when an ONLINE fee payment is created
-  subscriptionId String? // populated for subscription payments
-  studentId     String? // student the fee payment belongs to
-  amount        Decimal  @db.Decimal(12, 2)
-  currency      String   @default("USD")
-  idempotencyKey String   @unique // prevents duplicate initiation
-  provider      String // provider name the transaction belongs to
-  status        PaymentTransactionStatus @default(PENDING)
-  providerReference String? @unique // issued by the provider
+  id                String                   @id @default(cuid())
+  schoolId          String
+  purpose           PaymentPurpose
+  feePaymentId      String? // populated when an ONLINE fee payment is created
+  subscriptionId    String? // populated for subscription payments
+  studentId         String? // student the fee payment belongs to
+  amount            Decimal                  @db.Decimal(12, 2)
+  currency          String                   @default("USD")
+  idempotencyKey    String                   @unique // prevents duplicate initiation
+  provider          String // provider name the transaction belongs to
+  status            PaymentTransactionStatus @default(PENDING)
+  providerReference String?                  @unique // issued by the provider
   providerEventId   String? // provider's confirmed event id
-  checkoutUrl   String? // provider-hosted checkout redirection
-  failureReason String? // safe, human-readable; never secrets
-  initiatedById String?
-  verifiedById  String? // user or system account that verified server-side
-  verifiedAt    DateTime?
-  succeededAt   DateTime?
-  failedAt      DateTime?
-  expiryAt      DateTime? // when the pending link/hosted session expires
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  checkoutUrl       String? // provider-hosted checkout redirection
+  failureReason     String? // safe, human-readable; never secrets
+  initiatedById     String?
+  verifiedById      String? // user or system account that verified server-side
+  verifiedAt        DateTime?
+  succeededAt       DateTime?
+  failedAt          DateTime?
+  expiryAt          DateTime? // when the pending link/hosted session expires
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
 
-  school        School             @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  feePayment    FeePayment?        @relation(fields: [feePaymentId], references: [id], onDelete: SetNull)
+  school        School              @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  feePayment    FeePayment?         @relation(fields: [feePaymentId], references: [id], onDelete: SetNull)
   subscription  SchoolSubscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
-  student       Student?           @relation(fields: [studentId], references: [id], onDelete: SetNull)
-  initiatedBy   User?              @relation("PaymentInitiatedBy", fields: [initiatedById], references: [id], onDelete: SetNull)
-  verifiedBy    User?              @relation("PaymentVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+  student       Student?            @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  initiatedBy   User?               @relation("PaymentInitiatedBy", fields: [initiatedById], references: [id], onDelete: SetNull)
+  verifiedBy    User?               @relation("PaymentVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
   webhookEvents WebhookEvent[]
 
   @@index([schoolId, createdAt])
@@ -1473,16 +1549,16 @@ model PaymentTransaction {
 /// the unique (provider, providerEventId) pair means a duplicate delivery is
 /// recorded exactly once and ignored on later processing.
 model WebhookEvent {
-  id            String       @id @default(cuid())
-  provider      String
+  id              String        @id @default(cuid())
+  provider        String
   providerEventId String
-  eventType     String
-  payload       Json // raw verified payload (safe fields only)
-  status        WebhookStatus @default(RECEIVED)
-  processingNote String? // safe outcome note, never secrets
-  transactionId String?
-  receivedAt    DateTime     @default(now())
-  processedAt   DateTime?
+  eventType       String
+  payload         Json // raw verified payload (safe fields only)
+  status          WebhookStatus @default(RECEIVED)
+  processingNote  String? // safe outcome note, never secrets
+  transactionId   String?
+  receivedAt      DateTime      @default(now())
+  processedAt     DateTime?
 
   transaction PaymentTransaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
 
@@ -1495,20 +1571,20 @@ model WebhookEvent {
 /// retried job cannot create a duplicate message; without a configured
 /// provider a message is SKIPPED, never reported as SENT.
 model OutboundMessage {
-  id              String               @id @default(cuid())
-  schoolId        String?
-  userId          String?
-  channel         OutboundChannel
-  template        String // template key (e.g. "payment-receipt")
-  recipient       String // email address or phone number
-  status          OutboundMessageStatus @default(PENDING)
-  provider        String?
+  id                String                @id @default(cuid())
+  schoolId          String?
+  userId            String?
+  channel           OutboundChannel
+  template          String // template key (e.g. "payment-receipt")
+  recipient         String // email address or phone number
+  status            OutboundMessageStatus @default(PENDING)
+  provider          String?
   providerReference String?
-  dedupeKey       String?              @unique
-  errorReason     String? // safe failure summary, never secrets
-  createdAt       DateTime             @default(now())
-  sentAt          DateTime?
-  updatedAt       DateTime             @updatedAt
+  dedupeKey         String?               @unique
+  errorReason       String? // safe failure summary, never secrets
+  createdAt         DateTime              @default(now())
+  sentAt            DateTime?
+  updatedAt         DateTime              @updatedAt
 
   school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)

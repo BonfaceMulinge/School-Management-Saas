@@ -63,7 +63,7 @@ export default async function StudentProfilePage(
 
   if (!(await canViewStudent(access, studentId))) notFound();
 
-  const [student, classes, years, parents] = await Promise.all([
+  const [student, classes, years, parents, pathways, combinations] = await Promise.all([
     db.student.findUnique({
       where: { id: studentId, schoolId: access.schoolId },
       include: {
@@ -121,6 +121,16 @@ export default async function StudentProfilePage(
           orderBy: { name: "asc" },
         })
       ),
+    db.seniorSchoolPathway.findMany({
+      where: { schoolId: access.schoolId, archived: false },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    db.subjectCombination.findMany({
+      where: { schoolId: access.schoolId, archived: false },
+      select: { id: true, name: true, code: true },
+      orderBy: { name: "asc" },
+    }),
   ]);
 
   if (!student) notFound();
@@ -134,6 +144,12 @@ export default async function StudentProfilePage(
     id: y.id,
     name: y.name,
     terms: y.terms,
+  }));
+  const refPathways = pathways.map((p) => ({ id: p.id, name: p.name }));
+  const refCombinations = combinations.map((c) => ({
+    id: c.id,
+    name: c.name,
+    code: c.code,
   }));
   const refParents: GuardianParentRef[] = parents.map((p) => ({
     id: p.id,
@@ -365,6 +381,8 @@ export default async function StudentProfilePage(
                 studentName={fullName(student.firstName, student.middleName, student.lastName)}
                 classes={refClasses}
                 years={refYears}
+                pathways={refPathways}
+                combinations={refCombinations}
               />
               <TransferDialog
                 slug={slug}
@@ -372,6 +390,8 @@ export default async function StudentProfilePage(
                 studentName={fullName(student.firstName, student.middleName, student.lastName)}
                 classes={refClasses}
                 years={refYears}
+                pathways={refPathways}
+                combinations={refCombinations}
               />
               <EnrollDialog
                 slug={slug}
@@ -380,6 +400,8 @@ export default async function StudentProfilePage(
                 hasActiveEnrollment={hasActiveEnrollment}
                 classes={refClasses}
                 years={refYears}
+                pathways={refPathways}
+                combinations={refCombinations}
               />
             </div>
           ) : null}

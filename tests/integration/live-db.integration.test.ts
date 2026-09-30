@@ -392,6 +392,8 @@ describe("Tenant isolation (two schools)", () => {
       streamId: null,
       academicYearId: F.yearA!.id,
       termId: F.termA!.id,
+      pathwayId: null,
+      combinationId: null,
     });
   });
 

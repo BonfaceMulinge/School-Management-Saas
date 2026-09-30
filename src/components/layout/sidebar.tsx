@@ -5,8 +5,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { APP_NAME } from "@/lib/constants";
 import {
-  administrationNav,
-  dashboardNav,
   visibleDashboardNav,
   type NavItem,
 } from "@/components/layout/navigation";
@@ -54,6 +52,17 @@ function NavLink({
   );
 }
 
+function groupNav(navigation: NavItem[]): [string, NavItem[]][] {
+  const sections = new Map<string, NavItem[]>();
+  for (const item of navigation) {
+    const key = item.group || "General";
+    const list = sections.get(key) ?? [];
+    list.push(item);
+    sections.set(key, list);
+  }
+  return Array.from(sections.entries());
+}
+
 export function Sidebar({
   school,
   notificationsUnread,
@@ -66,8 +75,7 @@ export function Sidebar({
   platformRole: PlatformRole | null;
 }) {
   const navigation = visibleDashboardNav(role, platformRole);
-  const mainNavigation = navigation.filter((item) => dashboardNav.includes(item));
-  const adminNavigation = navigation.filter((item) => administrationNav.includes(item));
+  const sections = groupNav(navigation);
 
   return (
     <div className="flex h-full flex-col gap-4 border-r border-border bg-card px-4 py-6">
@@ -80,29 +88,26 @@ export function Sidebar({
 
       <Separator />
 
-      <div className="flex max-h-[calc(100vh-260px)] flex-col gap-6 overflow-y-auto">
-        <nav aria-label="Main navigation" className="flex flex-col gap-1">
-          {mainNavigation.map((item) => (
-            <NavLink
-              key={item.title}
-              item={item}
-              school={school}
-              badge={
-                item.href === "communication/notifications" && notificationsUnread
-                  ? notificationsUnread
-                  : undefined
-              }
-            />
-          ))}
-        </nav>
-
-        {adminNavigation.length > 0 ? (
-          <nav aria-label="Administration navigation" className="flex flex-col gap-1">
-            {adminNavigation.map((item) => (
-              <NavLink key={item.title} item={item} school={school} />
+      <div className="flex max-h-[calc(100vh-260px)] flex-col gap-5 overflow-y-auto">
+        {sections.map(([group, items]) => (
+          <nav key={group} aria-label={`${group} navigation`} className="flex flex-col gap-1">
+            <p className="px-3 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              {group}
+            </p>
+            {items.map((item) => (
+              <NavLink
+                key={item.title}
+                item={item}
+                school={school}
+                badge={
+                  item.href === "communication/notifications" && notificationsUnread
+                    ? notificationsUnread
+                    : undefined
+                }
+              />
             ))}
           </nav>
-        ) : null}
+        ))}
       </div>
 
       <div className="mt-auto px-2 text-xs text-muted-foreground">

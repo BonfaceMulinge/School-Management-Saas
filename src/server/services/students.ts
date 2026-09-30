@@ -90,21 +90,26 @@ export async function canViewStudent(
 }
 
 /**
- * Validate that a class/stream/academic-year/term combination belongs to the
- * tenant and is internally consistent (stream within class; term within year).
- * Returns normalized ids (null-safe) or null when invalid.
+ * Validate that a class/stream/academic-year/term (+ optional senior school
+ * pathway/combination) combination belongs to the tenant and is internally
+ * consistent (stream within class; term within year). Returns normalized ids
+ * (null-safe) or null when invalid.
  */
 export async function resolveEnrollmentTarget(
   schoolId: string,
   classId: string,
   academicYearId: string,
   streamId?: string | null,
-  termId?: string | null
+  termId?: string | null,
+  pathwayId?: string | null,
+  combinationId?: string | null
 ): Promise<{
   classId: string;
   streamId: string | null;
   academicYearId: string;
   termId: string | null;
+  pathwayId: string | null;
+  combinationId: string | null;
 } | null> {
   const [cls, year] = await Promise.all([
     db.class.findUnique({
@@ -138,11 +143,31 @@ export async function resolveEnrollmentTarget(
     if (!term || term.academicYearId !== academicYearId) return null;
   }
 
+  const resolvedPathwayId = pathwayId ?? null;
+  if (resolvedPathwayId) {
+    const pathway = await db.seniorSchoolPathway.findUnique({
+      where: { id: resolvedPathwayId, schoolId },
+      select: { id: true },
+    });
+    if (!pathway) return null;
+  }
+
+  const resolvedCombinationId = combinationId ?? null;
+  if (resolvedCombinationId) {
+    const combination = await db.subjectCombination.findUnique({
+      where: { id: resolvedCombinationId, schoolId },
+      select: { id: true },
+    });
+    if (!combination) return null;
+  }
+
   return {
     classId,
     streamId: resolvedStreamId,
     academicYearId,
     termId: resolvedTermId,
+    pathwayId: resolvedPathwayId,
+    combinationId: resolvedCombinationId,
   };
 }
 

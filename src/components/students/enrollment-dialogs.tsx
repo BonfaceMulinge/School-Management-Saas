@@ -32,20 +32,32 @@ export type RefYear = {
   terms: { id: string; name: string }[];
 };
 
-const selectClasses =
+export type RefPathway = { id: string; name: string };
+
+export type RefCombination = { id: string; name: string; code: string | null };
+
+export const enrollmentSelectClasses =
   "flex h-9 w-full rounded-md border border-border bg-background px-2 py-1 text-sm shadow-xs transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none";
 
-function EnrollmentFields({
+export function EnrollmentFields({
   classes,
   years,
+  pathways,
+  combinations,
+  defaultClassId,
+  defaultYearId,
   fe,
 }: {
   classes: RefClass[];
   years: RefYear[];
+  pathways?: RefPathway[];
+  combinations?: RefCombination[];
+  defaultClassId?: string;
+  defaultYearId?: string;
   fe: Record<string, string[]> | undefined;
 }) {
-  const [classId, setClassId] = useState("");
-  const [yearId, setYearId] = useState("");
+  const [classId, setClassId] = useState(defaultClassId ?? "");
+  const [yearId, setYearId] = useState(defaultYearId ?? "");
 
   const streams = classes.find((c) => c.id === classId)?.streams ?? [];
   const terms = years.find((y) => y.id === yearId)?.terms ?? [];
@@ -59,7 +71,7 @@ function EnrollmentFields({
           required
           value={classId}
           onChange={(e) => setClassId(e.target.value)}
-          className={selectClasses}
+          className={enrollmentSelectClasses}
         >
           <option value="" disabled>
             Select a class
@@ -72,7 +84,7 @@ function EnrollmentFields({
         </select>
       </Field>
       <Field id="en-stream" label="Stream" error={fe?.streamId?.[0]}>
-        <select id="en-stream" name="streamId" className={selectClasses}>
+        <select id="en-stream" name="streamId" className={enrollmentSelectClasses}>
           <option value="">No stream</option>
           {streams.map((s) => (
             <option key={s.id} value={s.id}>
@@ -88,7 +100,7 @@ function EnrollmentFields({
           required
           value={yearId}
           onChange={(e) => setYearId(e.target.value)}
-          className={selectClasses}
+          className={enrollmentSelectClasses}
         >
           <option value="" disabled>
             Select a year
@@ -101,7 +113,7 @@ function EnrollmentFields({
         </select>
       </Field>
       <Field id="en-term" label="Term" error={fe?.termId?.[0]}>
-        <select id="en-term" name="termId" className={selectClasses}>
+        <select id="en-term" name="termId" className={enrollmentSelectClasses}>
           <option value="">No term</option>
           {terms.map((t) => (
             <option key={t.id} value={t.id}>
@@ -110,6 +122,30 @@ function EnrollmentFields({
           ))}
         </select>
       </Field>
+      {pathways && pathways.length > 0 ? (
+        <Field id="en-pathway" label="Senior School pathway" error={fe?.pathwayId?.[0]}>
+          <select id="en-pathway" name="pathwayId" className={enrollmentSelectClasses}>
+            <option value="">Not applicable</option>
+            {pathways.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      ) : null}
+      {combinations && combinations.length > 0 ? (
+        <Field id="en-combination" label="Subject combination" error={fe?.combinationId?.[0]}>
+          <select id="en-combination" name="combinationId" className={enrollmentSelectClasses}>
+            <option value="">Not applicable</option>
+            {combinations.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </Field>
+      ) : null}
     </div>
   );
 }
@@ -121,6 +157,8 @@ export function EnrollDialog({
   hasActiveEnrollment,
   classes,
   years,
+  pathways,
+  combinations,
 }: {
   slug: string;
   studentId: string;
@@ -128,6 +166,8 @@ export function EnrollDialog({
   hasActiveEnrollment: boolean;
   classes: RefClass[];
   years: RefYear[];
+  pathways?: RefPathway[];
+  combinations?: RefCombination[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, isPending] = useActionState(
@@ -158,8 +198,14 @@ export function EnrollDialog({
             </DialogDescription>
           </DialogHeader>
           <form action={formAction} noValidate className="grid gap-4">
-            <input type="hidden" name="studentId" value={studentId} />
-            <EnrollmentFields classes={classes} years={years} fe={failure?.fieldErrors} />
+<input type="hidden" name="studentId" value={studentId} />
+            <EnrollmentFields
+              classes={classes}
+              years={years}
+              pathways={pathways}
+              combinations={combinations}
+              fe={failure?.fieldErrors}
+            />
             {failure?.error && !failure.fieldErrors ? (
               <p role="alert" className="text-sm text-destructive">{failure.error}</p>
             ) : null}
@@ -181,12 +227,16 @@ export function TransferDialog({
   studentName,
   classes,
   years,
+  pathways,
+  combinations,
 }: {
   slug: string;
   studentId: string;
   studentName: string;
   classes: RefClass[];
   years: RefYear[];
+  pathways?: RefPathway[];
+  combinations?: RefCombination[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, isPending] = useActionState(
@@ -217,8 +267,14 @@ export function TransferDialog({
             </DialogDescription>
           </DialogHeader>
           <form action={formAction} noValidate className="grid gap-4">
-            <input type="hidden" name="studentId" value={studentId} />
-            <EnrollmentFields classes={classes} years={years} fe={failure?.fieldErrors} />
+<input type="hidden" name="studentId" value={studentId} />
+            <EnrollmentFields
+              classes={classes}
+              years={years}
+              pathways={pathways}
+              combinations={combinations}
+              fe={failure?.fieldErrors}
+            />
             {failure?.error && !failure.fieldErrors ? (
               <p role="alert" className="text-sm text-destructive">{failure.error}</p>
             ) : null}
@@ -240,12 +296,16 @@ export function PromoteDialog({
   studentName,
   classes,
   years,
+  pathways,
+  combinations,
 }: {
   slug: string;
   studentId: string;
   studentName: string;
   classes: RefClass[];
   years: RefYear[];
+  pathways?: RefPathway[];
+  combinations?: RefCombination[];
 }) {
   const [open, setOpen] = useState(false);
   const [state, formAction, isPending] = useActionState(
@@ -276,8 +336,14 @@ export function PromoteDialog({
             </DialogDescription>
           </DialogHeader>
           <form action={formAction} noValidate className="grid gap-4">
-            <input type="hidden" name="studentId" value={studentId} />
-            <EnrollmentFields classes={classes} years={years} fe={failure?.fieldErrors} />
+<input type="hidden" name="studentId" value={studentId} />
+            <EnrollmentFields
+              classes={classes}
+              years={years}
+              pathways={pathways}
+              combinations={combinations}
+              fe={failure?.fieldErrors}
+            />
             {failure?.error && !failure.fieldErrors ? (
               <p role="alert" className="text-sm text-destructive">{failure.error}</p>
             ) : null}
