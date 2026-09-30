@@ -9,7 +9,8 @@ import { canViewStudent } from "@/server/services/students";
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { fullName } from "@/lib/students";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatMoney } from "@/lib/format";
+import { roundMoney } from "@/lib/money";
 import { EditStudentDialog } from "@/components/students/edit-student-dialog";
 import {
   EnrollDialog,
@@ -43,6 +44,13 @@ const ENROLLMENT_STATUS_LABELS: Record<string, string> = {
   GRADUATED: "Graduated",
   TRANSFERRED: "Transferred",
   DROPPED: "Dropped",
+};
+
+const FEE_STATUS_LABELS: Record<string, string> = {
+  NOT_BILLED: "No charges yet",
+  SETTLED: "Paid up",
+  PARTIAL: "Part paid",
+  UNPAID: "Unpaid",
 };
 
 export default async function StudentProfilePage(
@@ -85,11 +93,37 @@ export default async function StudentProfilePage(
         enrollments: {
           orderBy: [{ academicYear: { startDate: "desc" } }, { createdAt: "desc" }],
           include: {
-            class: { select: { name: true } },
+            class: { select: { name: true, level: true } },
             stream: { select: { name: true } },
             academicYear: { select: { name: true, startDate: true } },
             term: { select: { name: true } },
+            pathway: { select: { name: true, code: true } },
+            combination: { select: { name: true, code: true } },
           },
+        },
+        studentCharges: {
+          select: {
+            id: true,
+            itemName: true,
+            amount: true,
+            academicYear: { select: { name: true } },
+            term: { select: { name: true } },
+            class: { select: { name: true } },
+            adjustments: { select: { amount: true } },
+          },
+        },
+        feePayments: {
+          where: { status: { not: "REVERSED" as const } },
+          select: {
+            id: true,
+            receiptNo: true,
+            amount: true,
+            date: true,
+            status: true,
+            academicYear: { select: { name: true } },
+            term: { select: { name: true } },
+          },
+          orderBy: { date: "desc" },
         },
       },
     }),
@@ -158,6 +192,25 @@ export default async function StudentProfilePage(
   }));
 
   const hasActiveEnrollment = student.enrollments.some((e) => e.status === "ACTIVE");
+
+  // Fee standing for the whole record: billed (net of adjustments) vs paid.
+  const billed = student.studentCharges.reduce(
+    (sum, charge) =>
+      sum +
+      charge.adjustments.reduce(
+        (adjSum, adj) => adjSum + adj.amount.toNumber(),
+        charge.amount.toNumber()
+      ),
+    0
+  );
+  const paid = student.feePayments.reduce(
+    (sum, payment) => sum + payment.amount.toNumber(),
+    0
+  );
+  const balance = roundMoney(billed - paid);
+  const feeStatus =
+    billed === 0 ? "NOT_BILLED" : balance <= 0 ? "SETTLED" : paid > 0 ? "PARTIAL" : "UNPAID";
+  const money = (value: number) => formatMoney(value, school.currency);
 
   const editDefaults: StudentDialogData = {
     id: student.id,
@@ -419,6 +472,8 @@ export default async function StudentProfilePage(
                 <th scope="col" className="px-5 py-3 text-left font-medium">Term</th>
                 <th scope="col" className="px-5 py-3 text-left font-medium">Class</th>
                 <th scope="col" className="px-5 py-3 text-left font-medium">Stream</th>
+                <th scope="col" className="px-5 py-3 text-left font-medium">Pathway</th>
+                <th scope="col" className="px-5 py-3 text-left font-medium">Combination</th>
                 <th scope="col" className="px-5 py-3 text-left font-medium">Status</th>
                 {canManageEnrollments ? (
                   <th scope="col" className="px-5 py-3 text-right font-medium">Update</th>
@@ -435,6 +490,12 @@ export default async function StudentProfilePage(
                   <td className="px-5 py-3">{e.class.name}</td>
                   <td className="px-5 py-3 text-muted-foreground">
                     {e.stream ? e.stream.name : "—"}
+                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {e.pathway ? e.pathway.name : "—"}
+                  </td>
+                  <td className="px-5 py-3 text-muted-foreground">
+                    {e.combination ? e.combination.name : "—"}
                   </td>
                   <td className="px-5 py-3">
                     <Badge variant={e.status === "ACTIVE" ? "default" : "secondary"}>
@@ -457,14 +518,69 @@ export default async function StudentProfilePage(
         )}
       </section>
 
-      <section className="rounded-lg border border-dashed border-border px-5 py-6">
-        <h2 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-          Future modules
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Results, finance and communication records for this
-          student will appear here in later phases.
-        </p>
+      <section className="rounded-lg border border-border bg-card">
+        <div className="border-b border-border px-5 py-4">
+          <h2 className="text-sm font-semibold">Fees</h2>
+          <p className="text-xs text-muted-foreground">
+            Billed and paid across all academic years. Payments are recorded on the
+            Payments page.
+          </p>
+        </div>
+
+        <div className="grid gap-px bg-border sm:grid-cols-4">
+          <div className="bg-card px-5 py-4">
+            <p className="text-xs text-muted-foreground">Total billed</p>
+            <p className="mt-1 text-sm font-medium">{money(billed)}</p>
+          </div>
+          <div className="bg-card px-5 py-4">
+            <p className="text-xs text-muted-foreground">Total paid</p>
+            <p className="mt-1 text-sm font-medium">{money(paid)}</p>
+          </div>
+          <div className="bg-card px-5 py-4">
+            <p className="text-xs text-muted-foreground">Balance</p>
+            <p className="mt-1 text-sm font-medium">
+              {balance === 0 ? money(0) : money(Math.abs(balance))}
+            </p>
+          </div>
+          <div className="bg-card px-5 py-4">
+            <p className="text-xs text-muted-foreground">Status</p>
+            <div className="mt-1">
+              <Badge variant={feeStatus === "SETTLED" ? "default" : "secondary"}>
+                {FEE_STATUS_LABELS[feeStatus]}
+              </Badge>
+            </div>
+          </div>
+        </div>
+
+        {student.feePayments.length > 0 ? (
+          <div className="border-t border-border px-5 py-4">
+            <h3 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Payment history
+            </h3>
+            <ul className="mt-3 divide-y divide-border text-sm">
+              {student.feePayments.map((payment) => (
+                <li
+                  key={payment.id}
+                  className="flex flex-wrap items-center justify-between gap-2 py-2.5"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {payment.receiptNo}
+                      <span className="ml-2 font-normal text-muted-foreground">
+                        {payment.academicYear.name}
+                        {payment.term ? ` · ${payment.term.name}` : " · Whole year"}
+                      </span>
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(payment.date)}
+                    </p>
+                  </div>
+                  <p className="font-medium">{money(payment.amount.toNumber())}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
     </div>
   );

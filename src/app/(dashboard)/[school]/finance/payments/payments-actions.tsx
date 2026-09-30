@@ -2,13 +2,9 @@
 
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, RotateCcw } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
-import {
-  recordPayment,
-  correctPayment,
-  reversePayment,
-} from "@/server/actions/finance";
+import { recordPayment, correctPayment } from "@/server/actions/finance";
 import { paymentMethodLabel } from "@/lib/finance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -456,80 +452,3 @@ export function CorrectPaymentDialog({
   );
 }
 
-export function ReversePaymentDialog({
-  slug,
-  payment,
-  currency,
-}: {
-  slug: string;
-  payment: PaymentRow;
-  currency: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [reason, setReason] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const confirm = async () => {
-    if (reason.trim().length < 3) return;
-    setBusy(true);
-    const result = await reversePayment(slug, payment.id, reason);
-    setBusy(false);
-    if (result.ok) {
-      success({ title: "Payment reversed." });
-      setOpen(false);
-    } else {
-      success({ title: "Couldn’t reverse", description: result.error });
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => setOpen(true)}
-        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-      >
-        <RotateCcw className="size-4" aria-hidden="true" />
-        Reverse
-      </Button>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Reverse payment</DialogTitle>
-          <DialogDescription>
-            {payment.receiptNo} — {payment.studentName}, {formatMoney(payment.amount, currency)}. The
-            payment is voided in place and never deleted; a permanent reversal record is kept.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col gap-4">
-          <Field id="rev-reason" label="Reason" required hint="Required for the audit trail.">
-            <Input
-              id="rev-reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              placeholder="e.g. Duplicate entry, wrong student…"
-              className={inputClasses}
-            />
-          </Field>
-          {reason.trim().length > 0 && reason.trim().length < 3 ? (
-            <p role="alert" className="text-sm text-destructive">
-              A clear reason is required (at least 3 characters).
-            </p>
-          ) : null}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={busy}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirm}
-              disabled={busy || reason.trim().length < 3}
-            >
-              {busy ? "Reversing…" : "Reverse payment"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}

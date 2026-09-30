@@ -2,24 +2,12 @@
 
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Percent } from "lucide-react";
 
-import { chargeStudents, addChargeAdjustment } from "@/server/actions/finance";
+import { chargeStudents } from "@/server/actions/finance";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Field } from "@/components/ui/field";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { success } from "@/components/ui/use-toast";
 import { failureOf } from "@/lib/action-result";
 
-const inputClasses =
-  "flex h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none";
 const selectClasses =
   "flex h-9 w-full rounded-md border border-border bg-background px-2 text-sm shadow-xs focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 focus-visible:outline-none";
 
@@ -235,96 +223,3 @@ export function AssignChargesForm({
   );
 }
 
-const ADJUSTMENT_OPTIONS = [
-  { value: "DISCOUNT", label: "Discount" },
-  { value: "WAIVER", label: "Waiver" },
-  { value: "ADJUSTMENT", label: "Adjustment" },
-];
-
-export function AdjustChargeDialog({
-  slug,
-  charge,
-}: {
-  slug: string;
-  charge: ChargeRow;
-}) {
-  const [open, setOpen] = useState(false);
-  const [state, formAction, isPending] = useActionState(
-    async (_prev: Awaited<ReturnType<typeof addChargeAdjustment>> | null, data: FormData) => {
-      const result = await addChargeAdjustment(slug, data);
-      if (result.ok) {
-        success({ title: "Adjustment recorded." });
-        setOpen(false);
-      }
-      return result;
-    },
-    null
-  );
-  const failure = failureOf(state);
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <Button size="sm" variant="outline" onClick={() => setOpen(true)}>
-        Adjust
-      </Button>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Adjust charge</DialogTitle>
-          <DialogDescription>
-            {charge.studentName} — {charge.itemName} (net {charge.net.toFixed(2)})
-          </DialogDescription>
-        </DialogHeader>
-        <form action={formAction} noValidate>
-          <input type="hidden" name="chargeId" value={charge.id} />
-          <div className="grid gap-4">
-            <Field id="adjustment-type" label="Type" required>
-              <select id="adjustment-type" name="type" defaultValue="DISCOUNT" className={selectClasses}>
-                {ADJUSTMENT_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field id="adjustment-amount" label="Amount" required>
-              <Input
-                id="adjustment-amount"
-                name="amount"
-                inputMode="decimal"
-                placeholder="0.00"
-                required
-                className={inputClasses}
-              />
-            </Field>
-            <Field id="adjustment-reason" label="Reason" required hint="Shown on statements and kept on the audit trail.">
-              <Input
-                id="adjustment-reason"
-                name="reason"
-                placeholder="e.g. Sibling discount, relief approval…"
-                required
-                className={inputClasses}
-              />
-            </Field>
-          </div>
-          {failure?.error ? (
-            <p role="alert" className="mt-4 text-sm text-destructive">
-              {failure.error}
-            </p>
-          ) : null}
-          {charge.adjustments.length > 0 ? (
-            <p className="mt-4 flex items-start gap-1.5 text-xs text-muted-foreground">
-              <Percent className="mt-0.5 size-3.5" aria-hidden="true" />
-              {charge.adjustments.length} existing adjustment{charge.adjustments.length === 1 ? "" : "s"} —{" "}
-              {charge.adjustments.map((a) => `${a.type} ${a.amount}`).join(", ")}
-            </p>
-          ) : null}
-          <div className="mt-5 flex justify-end">
-            <Button type="submit" disabled={isPending}>
-              {isPending ? "Recording…" : "Record adjustment"}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}

@@ -16,7 +16,6 @@ import {
   RecordPaymentDialog,
   PaymentFormDialog,
   CorrectPaymentDialog,
-  ReversePaymentDialog,
   type PaymentRow,
 } from "./payments-actions";
 import { PrintReceiptButton } from "@/components/finance/print-receipt-button";
@@ -410,10 +409,7 @@ export default async function PaymentsPage(props: PageProps<"/[school]/finance/p
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-2">
                       {canManage && row.status === "APPLIED" ? (
-                        <>
-                          <CorrectPaymentDialog slug={slug} payment={row} />
-                          <ReversePaymentDialog slug={slug} payment={row} currency={school.currency} />
-                        </>
+                        <CorrectPaymentDialog slug={slug} payment={row} />
                       ) : null}
                       {row.status === "APPLIED" ? (
                         <PrintReceiptButton

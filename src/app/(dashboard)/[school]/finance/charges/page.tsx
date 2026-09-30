@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { formatMoney } from "@/lib/format";
 import { fullName } from "@/lib/students";
-import { AssignChargesForm, AdjustChargeDialog, type ChargeRow } from "./charges-actions";
+import { AssignChargesForm, type ChargeRow } from "./charges-actions";
 
 export const metadata: Metadata = {
   title: "Student charges",
@@ -188,7 +188,7 @@ export default async function StudentChargesPage(
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Student charges"
-        description="Bill fee items to enrolled students, then apply discounts, waivers or adjustments."
+        description="Bill fee items to enrolled students and track what has been paid."
       />
 
       {canManage && structure ? (
@@ -221,7 +221,7 @@ export default async function StudentChargesPage(
           <p className="mt-1 text-2xl font-semibold">{formatMoney(billed, school.currency)}</p>
         </div>
         <div className="bg-card px-5 py-4">
-          <p className="text-xs text-muted-foreground">Adjustments (discounts / waivers)</p>
+          <p className="text-xs text-muted-foreground">Existing adjustments</p>
           <p className="mt-1 text-2xl font-semibold">{formatMoney(adjusted, school.currency)}</p>
         </div>
       </div>
@@ -314,9 +314,8 @@ export default async function StudentChargesPage(
                 <th className="px-4 py-3 text-left font-medium">Item</th>
                 <th className="px-4 py-3 text-left font-medium">Period</th>
                 <th className="px-4 py-3 text-right font-medium">Amount</th>
-                <th className="px-4 py-3 text-center font-medium">Adjustments</th>
+                <th className="px-4 py-3 text-center font-medium">Existing adjustments</th>
                 <th className="px-4 py-3 text-right font-medium">Net</th>
-                <th className="px-4 py-3 text-right font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border bg-card">
@@ -338,9 +337,6 @@ export default async function StudentChargesPage(
                   </td>
                   <td className="px-4 py-3 text-right font-medium">
                     {formatMoney(row.net, school.currency)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {canManage ? <AdjustChargeDialog slug={slug} charge={row} /> : null}
                   </td>
                 </tr>
               ))}
