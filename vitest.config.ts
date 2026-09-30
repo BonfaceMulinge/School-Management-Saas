@@ -16,5 +16,8 @@ export default defineConfig({
     setupFiles: ["tests/setup-env.ts"],
     testTimeout: 60000,
     hookTimeout: 120000,
+    // The integration suites write to the same Postgres instance, so running
+    // test files concurrently makes their fixtures race on unique constraints.
+    fileParallelism: false,
   },
 });

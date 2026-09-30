@@ -549,10 +549,18 @@ export async function saveMarks(
   });
   const existingByStudent = new Map(existing.map((m) => [m.studentId, m]));
 
-  for (const studentId of remarks.keys()) {
-    if (!values.has(studentId) && !existingByStudent.has(studentId)) {
-      return fail("Record a mark before adding a remark for a student.");
-    }
+  // The form submits a remark input for every roster row, so only keep the ones
+  // that actually change something: a new comment, a comment being cleared, or a
+  // remark saved alongside a mark. A remark on a student with no mark at all is
+  // ignored rather than failing the whole sheet.
+  const remarkUpdates = new Map<string, string | null>();
+  for (const [studentId, remark] of remarks) {
+    if (!values.has(studentId) && !existingByStudent.has(studentId)) continue;
+    if (remark === null && !existingByStudent.get(studentId)?.remark) continue;
+    remarkUpdates.set(studentId, remark);
+  }
+  if (values.size === 0 && remarkUpdates.size === 0) {
+    return fail("No marks were submitted.");
   }
 
   let saved = 0;
@@ -561,6 +569,7 @@ export async function saveMarks(
   await db.$transaction(async (tx) => {
     for (const [studentId, value] of values) {
       const current = existingByStudent.get(studentId);
+      const remark = remarkUpdates.get(studentId);
       if (!current) {
         await tx.examMark.create({
           data: {
@@ -571,19 +580,19 @@ export async function saveMarks(
             studentId,
             enrollmentId: rosterById.get(studentId)?.id ?? null,
             marksObtained: value,
-            remark: remarks.get(studentId) ?? null,
+            remark: remark ?? null,
             recordedById: access.user.id,
           },
         });
         saved += 1;
       } else {
-        const remarkChanged = remarks.has(studentId) && remarks.get(studentId) !== current.remark;
+        const remarkChanged = remark !== undefined && remark !== current.remark;
         if (!current.marksObtained.equals(value) || remarkChanged) {
           await tx.examMark.update({
             where: { id: current.id },
             data: {
               ...(current.marksObtained.equals(value) ? {} : { marksObtained: value }),
-              ...(remarkChanged ? { remark: remarks.get(studentId) ?? null } : {}),
+              ...(remarkChanged ? { remark: remark ?? null } : {}),
               updatedById: access.user.id,
             },
           });
@@ -591,7 +600,7 @@ export async function saveMarks(
         }
       }
     }
-    for (const [studentId, remark] of remarks) {
+    for (const [studentId, remark] of remarkUpdates) {
       if (values.has(studentId)) continue;
       const current = existingByStudent.get(studentId);
       if (current && remark !== current.remark) {

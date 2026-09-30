@@ -336,12 +336,19 @@ describe("Tenant isolation (two schools)", () => {
   });
 
   it("lets two tenants use the same class name (tenant-scoped unique)", async () => {
+    // Scope to this suite's own schools: other tenants may legitimately have a
+    // class with the same name.
     const counts = await db.class.findMany({
-      where: { name: "Grade 4" },
+      where: {
+        name: "Grade 4",
+        schoolId: { in: [F.schoolA!.id, F.schoolB!.id] },
+      },
       select: { schoolId: true },
     });
     expect(counts).toHaveLength(2);
-    expect(counts.map((c) => c.schoolId)).toEqual(expect.arrayContaining([F.schoolA!.id, F.schoolB!.id]));
+    expect(counts.map((c) => c.schoolId)).toEqual(
+      expect.arrayContaining([F.schoolA!.id, F.schoolB!.id])
+    );
   });
 
   it("scopes teachers to their assigned classes only", async () => {

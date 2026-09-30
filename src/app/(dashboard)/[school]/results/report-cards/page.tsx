@@ -95,7 +95,9 @@ export default async function ReportCardsPage(
 
   const bands = bandsToView(defaultScale?.bands ?? []);
   const selectedClass = classes.find((c) => c.id === classId) ?? null;
-  const selectedExam = exams.find((e) => e.id === examId) ?? null;
+  // With no explicit exam chosen, fall back to the most recent exam so the page
+  // lands on something useful instead of an empty state.
+  const selectedExam = exams.find((e) => e.id === examId) ?? exams[0] ?? null;
 
   // Compute every report card for the selected exam.
   let cards: ReportCardStudent[] = [];
@@ -113,7 +115,6 @@ export default async function ReportCardsPage(
       where: {
         schoolId: access.schoolId,
         examId: selectedExam.id,
-        ...(scopedStudentIds ? { studentId: { in: scopedStudentIds } } : {}),
       },
       select: { studentId: true, subjectId: true, marksObtained: true, remark: true },
     });
@@ -130,6 +131,9 @@ export default async function ReportCardsPage(
       marksByStudent.set(m.studentId, inner);
     }
 
+    // The roster is always the whole class: a student's "position in class" must be
+    // computed against every classmate, even when the viewer is scoped to a
+    // single student. Scoping is applied after ranking.
     const roster = await db.enrollment.findMany({
       where: {
         schoolId: access.schoolId,
@@ -138,10 +142,7 @@ export default async function ReportCardsPage(
         termId: selectedExam.termId,
         status: "ACTIVE",
         ...(selectedExam.streamId ? { streamId: selectedExam.streamId } : {}),
-        student: {
-          archived: false,
-          ...(scopedStudentIds ? { id: { in: scopedStudentIds } } : {}),
-        },
+        student: { archived: false },
       },
       select: {
         pathway: { select: { name: true } },
@@ -217,7 +218,6 @@ export default async function ReportCardsPage(
 
     // Report cards are only released once an admin verifies the results.
     releaseBlocked = selectedExam.status !== "COMPLETED";
-
     meta = {
       schoolName: school.name,
       examName: selectedExam.name,
@@ -228,20 +228,34 @@ export default async function ReportCardsPage(
     };
   }
 
-  const visibleCards = onlyStudentId
-    ? cards.filter((c) => c.studentId === onlyStudentId)
+  // Students and parents only ever see their own card, and only after results are
+  // verified; anyone who can manage results may preview an unverified exam.
+  const released = !releaseBlocked;
+  const viewAllowed = canManageResults || released;
+  const scopedCards = scopedStudentIds
+    ? cards.filter((c) => scopedStudentIds.includes(c.studentId))
     : cards;
+  const visibleCards =
+    viewAllowed && !onlyStudentId
+      ? scopedCards
+      : viewAllowed
+        ? scopedCards.filter((c) => c.studentId === onlyStudentId)
+        : [];
 
-  const percentages = cards.map((c) => c.percentage).filter((p): p is number => p !== null);
+  // Class statistics must follow the same visibility rules as the cards.
+  const statCards = viewAllowed ? scopedCards : [];
+  const percentages = statCards
+    .map((c) => c.percentage)
+    .filter((p): p is number => p !== null);
   const average =
     percentages.length > 0
       ? Math.round((percentages.reduce((a, b) => a + b, 0) / percentages.length) * 10) / 10
       : null;
-  const top = cards
+  const top = statCards
     .filter((c) => c.percentage !== null)
     .sort((a, b) => (b.percentage as number) - (a.percentage as number))
     .slice(0, 5);
-  const bottom = [...cards]
+  const bottom = [...statCards]
     .filter((c) => c.percentage !== null)
     .sort((a, b) => (a.percentage as number) - (b.percentage as number))
     .slice(0, 5);
@@ -428,7 +442,7 @@ export default async function ReportCardsPage(
             </div>
             <div className="bg-card px-5 py-4">
               <p className="text-xs text-muted-foreground">Students</p>
-              <p className="mt-1 text-sm font-medium">{cards.length}</p>
+              <p className="mt-1 text-sm font-medium">{scopedCards.length}</p>
             </div>
             <div className="bg-card px-5 py-4">
               <p className="text-xs text-muted-foreground">Class average</p>
@@ -436,7 +450,12 @@ export default async function ReportCardsPage(
             </div>
           </div>
 
-          {cards.length === 0 ? (
+          {!viewAllowed ? (
+            <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
+              These results are still being marked. Your report card will appear here once an
+              administrator has verified and released them.
+            </div>
+          ) : scopedCards.length === 0 ? (
             <div className="rounded-lg border border-dashed border-border px-6 py-12 text-center text-sm text-muted-foreground">
               No students are enrolled for this exam&apos;s class, stream, year and term.
             </div>
@@ -469,7 +488,7 @@ export default async function ReportCardsPage(
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {cards.map((card) => (
+                      {scopedCards.map((card) => (
                         <tr key={card.studentId}>
                           <td className="px-4 py-2.5 text-center font-medium">
                             {card.rank ?? "—"}
